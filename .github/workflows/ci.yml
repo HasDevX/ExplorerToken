@@ -15,6 +15,21 @@ jobs:
       matrix:
         node-version: [20]
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: explorer
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d explorer"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,3 +51,12 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/explorer
+        run: |
+          cd backend
+          npm run migrate
+          npm run migrate:status
+          psql "$DATABASE_URL" -c "\dt" | sed -n '1,120p'

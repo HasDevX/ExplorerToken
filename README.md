@@ -130,6 +130,10 @@ npm run lint
 # Run tests
 npm test
 
+# Run database migrations (see docs/db.md for details)
+cd backend
+npm run migrate
+
 # Start development servers
 npm run dev
 ```
