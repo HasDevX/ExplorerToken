@@ -39,7 +39,8 @@ export const env = parsedEnv.data;
 // Log non-secret configuration on startup
 console.log('✓ Environment configuration loaded');
 console.log(`  PORT: ${env.PORT}`);
-console.log(`  DATABASE_URL: ${env.DATABASE_URL.split('@')[1] || '[configured]'}`);
+const dbUrlParts = env.DATABASE_URL.split('@');
+console.log(`  DATABASE_URL: ${dbUrlParts.length > 1 ? dbUrlParts[1] : '[configured]'}`);
 console.log(`  REDIS_URL: ${env.REDIS_URL ? '[configured]' : '[not set]'}`);
 console.log(`  ETHERSCAN_API_KEY: [configured]`);
 console.log(`  JWT_SECRET: [configured]`);
