@@ -59,4 +59,5 @@ jobs:
           cd backend
           npm run migrate
           npm run migrate:status
+          # List tables to verify migrations (limit output to prevent excessive logs)
           psql "$DATABASE_URL" -c "\dt" | sed -n '1,120p'
