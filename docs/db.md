@@ -86,3 +86,23 @@ Database migrations are plain SQL files stored in `backend/migrations/` and exec
 3. Future migrations follow the pattern `NNNN_description.sql`
 
 The migration runner (`backend/src/migrate/run.ts`) tracks applied migrations in the `_migrations` table to ensure idempotent execution.
+
+## Running Migrations Locally
+
+To set up the database for local development:
+
+```bash
+cd backend
+cp .env.sample .env   # edit if needed
+npm i
+npm run migrate
+npm run migrate:status
+```
+
+After running migrations, you can verify the tables were created using PostgreSQL meta-commands:
+
+```bash
+psql "$DATABASE_URL" -c "\dt"
+```
+
+This will list all tables in the database, confirming that the schema has been applied correctly.
