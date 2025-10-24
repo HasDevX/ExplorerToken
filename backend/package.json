@@ -1,0 +1,27 @@
+{
+  "name": "explorer-token-backend",
+  "version": "1.0.0",
+  "description": "Backend API server for ExplorerToken",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "echo \"Backend dev script placeholder\"",
+    "build": "echo \"Backend build placeholder\"",
+    "start": "echo \"Backend start placeholder\"",
+    "test": "echo \"Backend tests placeholder\"",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "keywords": [
+    "blockchain",
+    "explorer",
+    "etherscan",
+    "api"
+  ],
+  "author": "HasDevX",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3"
+  }
+}
