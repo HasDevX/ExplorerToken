@@ -77,6 +77,7 @@ All blockchain data is fetched from Etherscan API v2 (https://api.etherscan.io/v
 - Manages admin user credentials
 - Logs API usage metrics
 - Caches analytics data
+- Schema migrations are plain SQL files in `backend/migrations/` executed in order
 
 **Cache Layer**
 - Redis (optional, recommended for production)
