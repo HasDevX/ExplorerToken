@@ -3,6 +3,13 @@ import { z } from 'zod';
 import { BASE_URL, makeParams } from '@/config/etherscan';
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+// Known success messages from Etherscan API when status is '0' but not an error
+const NO_ERROR_MESSAGES = ['No records found', 'No transactions found'];
+
+// ============================================================================
 // Custom Error Class
 // ============================================================================
 
@@ -162,8 +169,8 @@ async function makeRequest<T>(
       );
     }
 
-    // Check status
-    if (parsed.data.status === '0' && parsed.data.message !== 'No records found') {
+    // Check status - allow certain messages even with status '0'
+    if (parsed.data.status === '0' && !NO_ERROR_MESSAGES.includes(parsed.data.message)) {
       throw new EtherscanError(`Etherscan API error: ${parsed.data.message}`, url, chainId);
     }
 
