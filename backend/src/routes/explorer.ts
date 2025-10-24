@@ -70,6 +70,29 @@ const TransfersQuerySchema = z.object({
 });
 
 // ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Handle errors from async route handlers
+ * Returns appropriate HTTP status and error response
+ */
+function handleRouteError(res: Response, error: unknown): void {
+  // Check if error is an EtherscanError by looking for its unique properties
+  if (error instanceof EtherscanError || (error && typeof error === 'object' && 'endpoint' in error)) {
+    res.status(502).json({
+      error: (error as EtherscanError).message,
+      endpoint: (error as EtherscanError).endpoint,
+    });
+    return;
+  }
+
+  res.status(500).json({
+    error: 'Internal server error',
+  });
+}
+
+// ============================================================================
 // Route Handlers
 // ============================================================================
 
@@ -145,17 +168,7 @@ explorerRouter.get(
         data,
       });
     } catch (error) {
-      // Check if error is an EtherscanError by looking for its unique properties
-      if (error instanceof EtherscanError || (error && typeof error === 'object' && 'endpoint' in error)) {
-        return res.status(502).json({
-          error: (error as EtherscanError).message,
-          endpoint: (error as EtherscanError).endpoint,
-        });
-      }
-
-      return res.status(500).json({
-        error: 'Internal server error',
-      });
+      handleRouteError(res, error);
     }
   }
 );
@@ -187,17 +200,7 @@ explorerRouter.get('/token/:chainId/:address/info', async (req: Request, res: Re
 
     res.json(data);
   } catch (error) {
-    // Check if error is an EtherscanError by looking for its unique properties
-    if (error instanceof EtherscanError || (error && typeof error === 'object' && 'endpoint' in error)) {
-      return res.status(502).json({
-        error: (error as EtherscanError).message,
-        endpoint: (error as EtherscanError).endpoint,
-      });
-    }
-
-    return res.status(500).json({
-      error: 'Internal server error',
-    });
+    handleRouteError(res, error);
   }
 });
 
@@ -228,16 +231,6 @@ explorerRouter.get('/tx/:chainId/:hash', async (req: Request, res: Response) => 
 
     res.json(data);
   } catch (error) {
-    // Check if error is an EtherscanError by looking for its unique properties
-    if (error instanceof EtherscanError || (error && typeof error === 'object' && 'endpoint' in error)) {
-      return res.status(502).json({
-        error: (error as EtherscanError).message,
-        endpoint: (error as EtherscanError).endpoint,
-      });
-    }
-
-    return res.status(500).json({
-      error: 'Internal server error',
-    });
+    handleRouteError(res, error);
   }
 });
