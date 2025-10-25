@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticateUser, generateToken } from '@/services/auth';
 import { requireAuth, AuthRequest } from '@/middleware/auth';
-import { loginLimiter } from '@/middleware/rateLimiters';
+import { loginLimiter, adminReadLimiter } from '@/middleware/rateLimiters';
 
 export const authRouter = Router();
 
@@ -71,7 +71,7 @@ authRouter.post('/logout', (_req: Request, res: Response) => {
  * GET /api/auth/me
  * Get current authenticated user info
  */
-authRouter.get('/me', requireAuth, (req: Request, res: Response) => {
+authRouter.get('/me', adminReadLimiter, requireAuth, (req: Request, res: Response) => {
   const authReq = req as AuthRequest;
   res.json({
     user: authReq.user,
