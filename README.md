@@ -59,6 +59,7 @@ All blockchain data is fetched from Etherscan API v2 (https://api.etherscan.io/v
 ### Component Responsibilities
 
 **Backend**
+
 - Acts as a proxy to Etherscan API v2
 - Normalizes upstream responses into consistent DTOs
 - Implements JWT-based admin authentication
@@ -67,12 +68,14 @@ All blockchain data is fetched from Etherscan API v2 (https://api.etherscan.io/v
 - Tracks basic usage metrics
 
 **Frontend**
+
 - Explorer UI for viewing token transfers, holders, and details
 - Admin dashboard for configuration management
 - Chain-aware interface with visual badges
 - React Query for efficient data fetching
 
 **Database (PostgreSQL)**
+
 - Stores application settings and configuration
 - Manages admin user credentials
 - Logs API usage metrics
@@ -80,6 +83,7 @@ All blockchain data is fetched from Etherscan API v2 (https://api.etherscan.io/v
 - Schema migrations are plain SQL files in `backend/migrations/` executed in order
 
 **Cache Layer**
+
 - Redis (optional, recommended for production)
 - NodeCache (in-process fallback)
 - TTL configured via admin dashboard
@@ -87,6 +91,7 @@ All blockchain data is fetched from Etherscan API v2 (https://api.etherscan.io/v
 ### First-Run Setup
 
 On initial deployment, a setup wizard guides you through:
+
 1. Enter Etherscan API key
 2. Select supported chains
 3. Create admin user
@@ -155,6 +160,7 @@ npm run dev
 Both backend and frontend have `.env.sample` files. Copy these to `.env` and configure:
 
 **Backend** (see `backend/.env.sample`):
+
 - `PORT`: Server port
 - `DATABASE_URL`: PostgreSQL connection string
 - `REDIS_URL`: Redis connection string (optional)
@@ -162,6 +168,7 @@ Both backend and frontend have `.env.sample` files. Copy these to `.env` and con
 - `JWT_SECRET`: Secret for JWT token generation
 
 **Frontend** (see `frontend/.env.sample`):
+
 - Configuration specific to frontend build and runtime
 
 ## Deployment
