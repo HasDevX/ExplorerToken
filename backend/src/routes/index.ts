@@ -1,5 +1,9 @@
 import { Express, Request, Response } from 'express';
 import { explorerRouter } from '@/routes/explorer';
+import { setupRouter } from '@/routes/setup';
+import { authRouter } from '@/routes/auth';
+import { adminRouter } from '@/routes/admin';
+import { strictCors } from '@/config/cors';
 
 /**
  * Register all application routes
@@ -12,7 +16,14 @@ export function registerRoutes(app: Express, setupComplete: boolean): void {
     res.json({ ok: true });
   });
 
-  // Mount explorer API routes
+  // Setup routes - available without additional CORS configuration
+  app.use('/api/setup', setupRouter);
+
+  // Sensitive groups → strict CORS
+  app.use('/api/auth', strictCors, authRouter);
+  app.use('/api/admin', strictCors, adminRouter);
+
+  // Explorer routes rely on same-origin (or dev proxy) without wildcard CORS
   app.use('/api', explorerRouter);
 
   // Additional routes can be registered here based on setupComplete flag

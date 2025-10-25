@@ -100,16 +100,50 @@ On initial deployment, a setup wizard guides you through:
 ## Roadmap
 
 - [x] 1. Bootstrap Monorepo & CI
-- [ ] 2. Backend Skeleton
-- [ ] 3. DB Schema & Migrations
-- [ ] 4. Etherscan v2 Client (paths-driven)
-- [ ] 5. Explorer API Routes
-- [ ] 6. Cache & Rate-Limit
-- [ ] 7. Frontend Scaffold
-- [ ] 8. Setup Wizard & Admin
+- [x] 2. Backend Skeleton
+- [x] 3. DB Schema & Migrations
+- [x] 4. Etherscan v2 Client (paths-driven)
+- [x] 5. Explorer API Routes
+- [x] 6. Cache & Rate-Limit
+- [x] 7. Frontend Scaffold
+- [x] 8. Setup Wizard & Admin
 - [ ] 9. Docker & Compose
 - [ ] 10. Deploy Workflow (SSH)
 - [ ] 11. Polish & Security
+
+## First-Time Setup
+
+ExplorerToken includes a built-in setup wizard that runs on first launch:
+
+1. **Start the application** (backend and frontend)
+2. **Navigate to the setup wizard** - You'll be automatically redirected to `/setup`
+3. **Complete the 4-step wizard**:
+   - **Step 1**: Enter your Etherscan API key
+   - **Step 2**: Select which blockchain chains to support (10 default EVM chains available)
+   - **Step 3**: Create your admin account (username and password, minimum 8 characters)
+   - **Step 4**: Configure cache TTL (default: 60 seconds, minimum: 10 seconds)
+4. **Submit the setup** - This creates the admin user and initializes the database
+5. **Login** - You'll be redirected to `/login` to sign in with your new credentials
+6. **Access the dashboard** - Manage your explorer from `/dashboard`
+
+### Admin Dashboard Features
+
+After logging in, the admin dashboard provides:
+
+- **Settings Tab**: Configure supported chains and cache TTL
+- **API Key Tab**: Update your Etherscan API key
+- **Cache Tab**: Clear the application cache to force fresh data fetching
+- **Metrics Tab**: View API usage statistics and analytics
+
+All admin routes are protected with JWT authentication. The JWT token is automatically attached to requests and stored in localStorage.
+
+### Setup State Guard
+
+The application includes a global route guard that:
+- Checks `/api/setup/state` on initialization
+- Redirects all routes to `/setup` if setup is incomplete
+- Allows access to all routes once setup is complete
+- No server restart required after completing setup
 
 ## Development
 

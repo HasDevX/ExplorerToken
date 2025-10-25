@@ -37,6 +37,31 @@ const envSchema = z.object({
     .refine((val) => !isNaN(val) && val > 0, {
       message: 'RATE_LIMIT_PER_MIN must be a positive number',
     }),
+  CORS_ALLOW_ORIGINS: z
+    .preprocess(
+      (value) => {
+        if (typeof value === 'string') {
+          return value
+            .split(',')
+            .map((origin) => origin.trim())
+            .filter(Boolean);
+        }
+
+        if (Array.isArray(value)) {
+          return value
+            .map((origin) => (typeof origin === 'string' ? origin.trim() : String(origin).trim()))
+            .filter(Boolean);
+        }
+
+        if (!value) {
+          return [];
+        }
+
+        return [String(value).trim()].filter(Boolean);
+      },
+      z.array(z.string().min(1))
+    )
+    .default([]),
   ETHERSCAN_API_KEY: z.string().min(1, { message: 'ETHERSCAN_API_KEY is required' }),
 });
 
@@ -59,4 +84,7 @@ const dbUrlParts = env.DATABASE_URL.split('@');
 console.log(`  DATABASE_URL: ${dbUrlParts.length > 1 ? dbUrlParts[1] : '[configured]'}`);
 console.log(`  REDIS_URL: ${env.REDIS_URL ? '[configured]' : '[not set]'}`);
 console.log(`  ETHERSCAN_API_KEY: [configured]`);
+console.log(
+  `  CORS_ALLOW_ORIGINS: ${env.CORS_ALLOW_ORIGINS.length ? env.CORS_ALLOW_ORIGINS.join(', ') : '[none]'}`
+);
 console.log(`  JWT_SECRET: [configured]`);

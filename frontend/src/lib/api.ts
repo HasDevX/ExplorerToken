@@ -20,6 +20,15 @@ const apiClient = axios.create({
   },
 });
 
+// Add JWT token to requests automatically
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('jwt_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // ============================================================================
 // API Functions
 // ============================================================================
@@ -67,4 +76,130 @@ export async function getTokenInfo(chainId: number, address: string): Promise<To
 export async function getTx(chainId: number, hash: string): Promise<TxDetails> {
   const response = await apiClient.get(`/tx/${chainId}/${hash}`);
   return TxDetailsSchema.parse(response.data);
+}
+
+// ============================================================================
+// Setup API Functions
+// ============================================================================
+
+export interface SetupState {
+  setupComplete: boolean;
+}
+
+export interface SetupData {
+  apiKey: string;
+  chains: number[];
+  adminUsername: string;
+  adminPassword: string;
+  cacheTtl: number;
+}
+
+/**
+ * Get setup state
+ */
+export async function getSetupState(): Promise<SetupState> {
+  const response = await apiClient.get('/setup/state');
+  return response.data;
+}
+
+/**
+ * Complete setup wizard
+ */
+export async function completeSetup(data: SetupData): Promise<void> {
+  await apiClient.post('/setup/complete', data);
+}
+
+// ============================================================================
+// Auth API Functions
+// ============================================================================
+
+export interface LoginData {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  token: string;
+  user: {
+    id: string;
+    username: string;
+    role: string;
+  };
+}
+
+/**
+ * Login admin user
+ */
+export async function login(data: LoginData): Promise<LoginResponse> {
+  const response = await apiClient.post('/auth/login', data);
+  return response.data;
+}
+
+/**
+ * Logout admin user
+ */
+export async function logout(): Promise<void> {
+  await apiClient.post('/auth/logout');
+}
+
+/**
+ * Get current user info
+ */
+export async function getCurrentUser(): Promise<{
+  user: { userId: string; username: string; role: string };
+}> {
+  const response = await apiClient.get('/auth/me');
+  return response.data;
+}
+
+// ============================================================================
+// Admin API Functions
+// ============================================================================
+
+export interface Settings {
+  chains: number[];
+  cacheTtl: number;
+  apiKeySet: boolean;
+  apiKeyLastValidated?: string;
+}
+
+/**
+ * Get admin settings
+ */
+export async function getAdminSettings(): Promise<Settings> {
+  const response = await apiClient.get('/admin/settings');
+  return response.data;
+}
+
+/**
+ * Update admin settings
+ */
+export async function updateAdminSettings(data: {
+  chains?: number[];
+  cacheTtl?: number;
+}): Promise<void> {
+  await apiClient.put('/admin/settings', data);
+}
+
+/**
+ * Update API key
+ */
+export async function updateApiKey(apiKey: string): Promise<void> {
+  await apiClient.put('/admin/api-key', { apiKey });
+}
+
+/**
+ * Clear cache
+ */
+export async function clearCache(): Promise<void> {
+  await apiClient.post('/admin/cache/clear');
+}
+
+/**
+ * Get metrics
+ */
+export async function getMetrics(): Promise<{ usage: Record<string, number>; timestamp: string }> {
+  const response = await apiClient.get('/admin/metrics');
+  return response.data;
 }
