@@ -7,9 +7,11 @@ import nock from 'nock';
 import {
   getTokenTransfers,
   getTopTokenHolders,
+  getTokenHolders,
   getTxDetails,
   getTokenInfo,
   EtherscanError,
+  ProviderFeatureUnavailableError,
 } from '../etherscanClient';
 import { BASE_URL } from '@/config/etherscan';
 
@@ -479,6 +481,178 @@ describe('etherscanClient', () => {
           address: '0x123...',
         })
       ).rejects.toThrow(EtherscanError);
+    });
+  });
+
+  describe('ProviderFeatureUnavailableError handling', () => {
+    it('should throw ProviderFeatureUnavailableError on 402 status code', async () => {
+      nock(BASE_URL).get('').query(true).reply(402, {
+        status: '0',
+        message: 'Payment Required',
+        result: [],
+      });
+
+      await expect(
+        getTokenHolders({
+          chainId: 1,
+          contractAddress: '0x789...',
+        })
+      ).rejects.toThrow(ProviderFeatureUnavailableError);
+    });
+
+    it('should throw ProviderFeatureUnavailableError on 403 status code', async () => {
+      nock(BASE_URL).get('').query(true).reply(403, {
+        status: '0',
+        message: 'Forbidden',
+        result: [],
+      });
+
+      await expect(
+        getTokenHolders({
+          chainId: 1,
+          contractAddress: '0x789...',
+        })
+      ).rejects.toThrow('Feature not available');
+    });
+
+    it('should throw ProviderFeatureUnavailableError on NOTOK with plan message', async () => {
+      nock(BASE_URL).get('').query(true).reply(200, {
+        status: '0',
+        message: 'NOTOK',
+        result: 'This feature is not available for your plan',
+      });
+
+      await expect(
+        getTokenHolders({
+          chainId: 1,
+          contractAddress: '0x789...',
+        })
+      ).rejects.toThrow('Feature not available');
+    });
+  });
+
+  describe('getTopTokenHolders resolver pattern', () => {
+    it('should try tokenholderlist first and succeed', async () => {
+      const mockResponse = {
+        status: '1',
+        message: 'OK',
+        result: [
+          {
+            TokenHolderAddress: '0xaaa...',
+            TokenHolderQuantity: '500000000000000000000',
+            Share: '50.5',
+          },
+        ],
+      };
+
+      nock(BASE_URL).get('').query(true).reply(200, mockResponse);
+
+      const result = await getTopTokenHolders({
+        chainId: 1,
+        contractAddress: '0x789...',
+        limit: 100,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        address: '0xaaa...',
+        balanceRaw: '500000000000000000000',
+        percent: 50.5,
+      });
+    });
+
+    it('should fallback to topholders on 404 from tokenholderlist', async () => {
+      const mockSuccessResponse = {
+        status: '1',
+        message: 'OK',
+        result: [
+          {
+            TokenHolderAddress: '0xbbb...',
+            TokenHolderQuantity: '300000000000000000000',
+          },
+        ],
+      };
+
+      // First request (tokenholderlist) fails with 404
+      nock(BASE_URL)
+        .get('')
+        .query((q) => q.action === 'tokenholderlist')
+        .reply(404, {
+          status: '0',
+          message: 'Not Found',
+          result: [],
+        });
+
+      // Second request (topholders) succeeds
+      nock(BASE_URL)
+        .get('')
+        .query((q) => q.action === 'topholders')
+        .reply(200, mockSuccessResponse);
+
+      const result = await getTopTokenHolders({
+        chainId: 1,
+        contractAddress: '0x789...',
+        limit: 50,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].address).toBe('0xbbb...');
+    });
+
+    it('should fallback to topholders on Invalid action error', async () => {
+      const mockSuccessResponse = {
+        status: '1',
+        message: 'OK',
+        result: [
+          {
+            TokenHolderAddress: '0xccc...',
+            TokenHolderQuantity: '200000000000000000000',
+          },
+        ],
+      };
+
+      // First request fails with Invalid action
+      nock(BASE_URL)
+        .get('')
+        .query((q) => q.action === 'tokenholderlist')
+        .reply(200, {
+          status: '0',
+          message: 'Invalid action',
+          result: [],
+        });
+
+      // Second request succeeds
+      nock(BASE_URL)
+        .get('')
+        .query((q) => q.action === 'topholders')
+        .reply(200, mockSuccessResponse);
+
+      const result = await getTopTokenHolders({
+        chainId: 1,
+        contractAddress: '0x789...',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].address).toBe('0xccc...');
+    });
+
+    it('should not fallback on ProviderFeatureUnavailableError', async () => {
+      // First request fails with feature unavailable
+      nock(BASE_URL).get('').query(true).reply(200, {
+        status: '0',
+        message: 'NOTOK',
+        result: 'This feature is not available for your plan',
+      });
+
+      await expect(
+        getTopTokenHolders({
+          chainId: 1,
+          contractAddress: '0x789...',
+        })
+      ).rejects.toThrow('Feature not available');
+
+      // Should only make one request (no fallback)
+      expect(nock.isDone()).toBe(true);
     });
   });
 });
