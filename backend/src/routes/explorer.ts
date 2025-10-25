@@ -118,19 +118,6 @@ const HoldersQuerySchema = z.object({
  * Returns appropriate HTTP status and error response
  */
 function handleRouteError(res: Response, error: unknown): void {
-  // Check for ProviderFeatureUnavailableError first
-  if (
-    error instanceof ProviderFeatureUnavailableError ||
-    (error &&
-      typeof error === 'object' &&
-      error.constructor?.name === 'ProviderFeatureUnavailableError')
-  ) {
-    res.status(501).json({
-      error: 'Holders not available on this chain or plan',
-    });
-    return;
-  }
-
   // Check if error is an EtherscanError by looking for its unique properties
   if (
     error instanceof EtherscanError ||
@@ -354,29 +341,64 @@ explorerRouter.get('/token/:chainId/:address/holders', async (req: Request, res:
     const cacheKey = `holders:${chainId}:${address}:${page}:${offset}`;
     const cached = await cache.get(cacheKey);
     if (cached !== null) {
+      // Add Cache-Control header
+      res.setHeader('Cache-Control', 'public, max-age=60');
       return res.json(cached);
     }
 
-    // Call Etherscan client
-    const data = await getTokenHolders({
-      chainId,
-      contractAddress: address,
-      page,
-      offset,
-    });
+    try {
+      // Call Etherscan client
+      const data = await getTokenHolders({
+        chainId,
+        contractAddress: address,
+        page,
+        offset,
+      });
 
-    const response = {
-      chainId,
-      address,
-      page,
-      offset,
-      data,
-    };
+      const response = {
+        page,
+        offset,
+        total: null,
+        result: data,
+      };
 
-    // Cache the response for 180 seconds (3 minutes)
-    await cache.set(cacheKey, response, 180);
+      // Cache the response for 180 seconds (3 minutes)
+      await cache.set(cacheKey, response, 180);
 
-    res.json(response);
+      // Add Cache-Control header
+      res.setHeader('Cache-Control', 'public, max-age=60');
+
+      res.json(response);
+    } catch (error) {
+      // Check for ProviderFeatureUnavailableError
+      if (
+        error instanceof ProviderFeatureUnavailableError ||
+        (error &&
+          typeof error === 'object' &&
+          error.constructor?.name === 'ProviderFeatureUnavailableError')
+      ) {
+        // Return 200 with unavailable flag instead of error
+        const response = {
+          page,
+          offset,
+          total: null,
+          unavailable: true,
+          reason: 'Holders not available on this chain/plan',
+          result: [],
+        };
+
+        // Cache the unavailable response for 180 seconds as well
+        await cache.set(cacheKey, response, 180);
+
+        // Add Cache-Control header
+        res.setHeader('Cache-Control', 'public, max-age=60');
+
+        return res.status(200).json(response);
+      }
+
+      // For other errors, delegate to handleRouteError
+      throw error;
+    }
   } catch (error) {
     handleRouteError(res, error);
   }

@@ -243,15 +243,14 @@ Returns token holders with pagination for a specific token contract.
 GET /api/token/1/0xdAC17F958D2ee523a2206206994597C13D831ec7/holders?page=1&offset=25
 ```
 
-**Response:**
+**Response (Success):**
 
 ```json
 {
-  "chainId": 1,
-  "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
   "page": 1,
   "offset": 25,
-  "data": [
+  "total": null,
+  "result": [
     {
       "address": "0x1234567890123456789012345678901234567890",
       "balanceRaw": "1000000000000000000000",
@@ -266,22 +265,38 @@ GET /api/token/1/0xdAC17F958D2ee523a2206206994597C13D831ec7/holders?page=1&offse
 }
 ```
 
+**Response (Feature Unavailable):**
+
+When the holders feature is not available on a specific chain or plan, the API returns a 200 status with the `unavailable` flag:
+
+```json
+{
+  "page": 1,
+  "offset": 25,
+  "total": null,
+  "unavailable": true,
+  "reason": "Holders not available on this chain/plan",
+  "result": []
+}
+```
+
 **Response Fields:**
 
-- `chainId` (number) - The blockchain chain ID
-- `address` (string) - The token contract address
 - `page` (number) - Current page number
 - `offset` (number) - Number of results per page
-- `data` (array) - Array of holder objects
+- `total` (number | null) - Total number of holders (currently always null, reserved for future use)
+- `unavailable` (boolean, optional) - True if the feature is unavailable on this chain/plan
+- `reason` (string, optional) - Human-readable reason for unavailability
+- `result` (array) - Array of holder objects (empty when unavailable)
   - `address` (string) - Holder's address
   - `balanceRaw` (string) - Token balance in base units (raw value)
   - `percent` (number, optional) - Percentage of total supply held
 
 **Status Codes:**
 
-- `200 OK` - Success
+- `200 OK` - Success (including when feature is unavailable)
 - `400 Bad Request` - Invalid parameters (invalid chainId, address format, or query parameters)
-- `502 Bad Gateway` - Upstream Etherscan API error (including rate limit exceeded)
+- `502 Bad Gateway` - Upstream Etherscan API error (timeouts, 5xx errors, rate limits)
 
 **Upstream Mapping:**
 
@@ -297,6 +312,13 @@ Documentation references:
 
 - Responses are cached for 180 seconds (3 minutes)
 - Cache key includes chainId, address, page, and offset for proper pagination
+- Cache-Control header is set to `public, max-age=60`
+
+**Error Handling:**
+
+- **Feature Unavailable**: Returns 200 with `unavailable: true` instead of an error
+- **Rate Limiting (429)**: Returns 502 with `ETHERSCAN_ERROR` code
+- **Other Upstream Errors**: Returns 502 with error details
 
 ---
 
