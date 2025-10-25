@@ -240,6 +240,58 @@ export async function getTokenTransfers(
 }
 
 /**
+ * Get token holders with pagination support
+ * Implements path resolver: tries tokenholderlist first, falls back to topholders
+ * @param opts - Options including chainId, contractAddress, and pagination
+ * @returns Array of normalized holders
+ */
+export async function getTokenHolders(
+  opts: ChainScoped & { contractAddress: string } & PageOpts
+): Promise<NormalizedHolder[]> {
+  const { chainId, contractAddress, page, offset } = opts;
+
+  // Try tokenholderlist first (standard endpoint)
+  let params = makeParams('token', 'tokenholderlist', chainId, {
+    contractaddress: contractAddress,
+    page,
+    offset,
+  });
+
+  try {
+    const result = await makeRequest(BASE_URL, params, chainId, z.array(TopHolderSchema));
+
+    // Normalize the result
+    return result.map((holder) => ({
+      address: holder.TokenHolderAddress,
+      balanceRaw: holder.TokenHolderQuantity,
+      percent: holder.Share ? parseFloat(holder.Share) : undefined,
+    }));
+  } catch (error) {
+    // If tokenholderlist fails, try topholders as fallback
+    // Some Etherscan instances might only support topholders
+    if (error instanceof EtherscanError && error.message.includes('Invalid action')) {
+      params = makeParams('token', 'topholders', chainId, {
+        contractaddress: contractAddress,
+        page,
+        offset,
+      });
+
+      const result = await makeRequest(BASE_URL, params, chainId, z.array(TopHolderSchema));
+
+      return result.map((holder) => ({
+        address: holder.TokenHolderAddress,
+        balanceRaw: holder.TokenHolderQuantity,
+        percent: holder.Share ? parseFloat(holder.Share) : undefined,
+      }));
+    }
+
+    // Re-throw if it's a different error
+    throw error;
+  }
+}
+
+/**
+ * @deprecated Use getTokenHolders instead for pagination support
  * Get top token holders for a specific token
  * @param opts - Options including chainId, contractAddress, and limit
  * @returns Array of normalized holders
@@ -249,19 +301,12 @@ export async function getTopTokenHolders(
 ): Promise<NormalizedHolder[]> {
   const { chainId, contractAddress, limit } = opts;
 
-  const params = makeParams('token', 'topholders', chainId, {
-    contractaddress: contractAddress,
-    offset: limit, // limit maps to offset parameter
+  return getTokenHolders({
+    chainId,
+    contractAddress,
+    page: 1,
+    offset: limit || 25,
   });
-
-  const result = await makeRequest(BASE_URL, params, chainId, z.array(TopHolderSchema));
-
-  // Normalize the result
-  return result.map((holder) => ({
-    address: holder.TokenHolderAddress,
-    balanceRaw: holder.TokenHolderQuantity,
-    percent: holder.Share ? parseFloat(holder.Share) : undefined,
-  }));
 }
 
 /**

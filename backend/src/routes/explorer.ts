@@ -4,6 +4,7 @@ import {
   getTokenTransfers,
   getTxDetails,
   getTokenInfo,
+  getTokenHolders,
   EtherscanError,
 } from '@/services/etherscanClient';
 import * as cache from '@/services/cache';
@@ -86,6 +87,25 @@ const TransfersQuerySchema = z.object({
       message: 'offset must be between 1 and 100',
     }),
   sort: z.enum(['asc', 'desc']).optional().default('desc'),
+});
+
+const HoldersQuerySchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .default('1')
+    .transform(Number)
+    .refine((n) => n > 0, {
+      message: 'page must be a positive integer',
+    }),
+  offset: z
+    .string()
+    .optional()
+    .default('25')
+    .transform(Number)
+    .refine((n) => n > 0 && n <= 100, {
+      message: 'offset must be between 1 and 100',
+    }),
 });
 
 // ============================================================================
@@ -281,6 +301,67 @@ explorerRouter.get('/tx/:chainId/:hash', async (req: Request, res: Response) => 
     await cache.set(cacheKey, data, 60);
 
     res.json(data);
+  } catch (error) {
+    handleRouteError(res, error);
+  }
+});
+
+/**
+ * GET /api/token/:chainId/:address/holders
+ * Returns token holders with pagination
+ */
+explorerRouter.get('/token/:chainId/:address/holders', async (req: Request, res: Response) => {
+  try {
+    // Validate params
+    const paramsResult = ChainIdParamSchema.merge(AddressParamSchema).safeParse(req.params);
+    if (!paramsResult.success) {
+      return res.status(400).json({
+        error: 'Invalid parameters',
+        details: paramsResult.error.format(),
+      });
+    }
+
+    // Validate query
+    const queryResult = HoldersQuerySchema.safeParse(req.query);
+    if (!queryResult.success) {
+      return res.status(400).json({
+        error: 'Invalid query parameters',
+        details: queryResult.error.format(),
+      });
+    }
+
+    const { chainId, address } = paramsResult.data;
+    const { page, offset } = queryResult.data;
+
+    recordUsage('token/holders', chainId);
+
+    // Try to get from cache
+    const cacheKey = `holders:${chainId}:${address}:${page}:${offset}`;
+    const cached = await cache.get(cacheKey);
+    if (cached !== null) {
+      return res.json(cached);
+    }
+
+    // Call Etherscan client
+    const data = await getTokenHolders({
+      chainId,
+      contractAddress: address,
+      page,
+      offset,
+    });
+
+    const response = {
+      chainId,
+      address,
+      page,
+      offset,
+      data,
+    };
+
+    // Cache the response for 180 seconds (3 minutes)
+    await cache.set(cacheKey, response, 180);
+
+    res.json(response);
   } catch (error) {
     handleRouteError(res, error);
   }
