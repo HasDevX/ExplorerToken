@@ -1,6 +1,5 @@
 import express from 'express';
 import helmet from 'helmet';
-import cors from 'cors';
 import morgan from 'morgan';
 import { env } from '@/config/env';
 import { logger } from '@/lib/logger';
@@ -19,7 +18,7 @@ const app = express();
 
 // Apply middleware
 app.use(helmet());
-app.use(cors({ origin: '*' }));
+// Note: CORS is now applied per-route in registerRoutes
 app.use(express.json());
 app.use(morgan('combined'));
 

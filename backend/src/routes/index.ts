@@ -1,5 +1,9 @@
 import { Express, Request, Response } from 'express';
+import cors from 'cors';
 import { explorerRouter } from '@/routes/explorer';
+import { setupRouter } from '@/routes/setup';
+import { authRouter } from '@/routes/auth';
+import { adminRouter } from '@/routes/admin';
 
 /**
  * Register all application routes
@@ -12,8 +16,31 @@ export function registerRoutes(app: Express, setupComplete: boolean): void {
     res.json({ ok: true });
   });
 
-  // Mount explorer API routes
-  app.use('/api', explorerRouter);
+  // Setup routes - always available (with public CORS)
+  app.use('/api/setup', cors({ origin: '*' }), setupRouter);
+
+  // Auth routes - strict CORS for security
+  app.use(
+    '/api/auth',
+    cors({
+      origin: process.env.FRONTEND_URL || '*',
+      credentials: true,
+    }),
+    authRouter
+  );
+
+  // Admin routes - strict CORS for security, requires authentication
+  app.use(
+    '/api/admin',
+    cors({
+      origin: process.env.FRONTEND_URL || '*',
+      credentials: true,
+    }),
+    adminRouter
+  );
+
+  // Mount explorer API routes - public CORS
+  app.use('/api', cors({ origin: '*' }), explorerRouter);
 
   // Additional routes can be registered here based on setupComplete flag
   // For example, only expose certain endpoints after DB migrations are complete
