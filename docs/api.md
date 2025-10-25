@@ -307,6 +307,8 @@ Authenticate an admin user and receive a JWT token.
 }
 ```
 
+**Note:** The login response returns the user `id` directly from the database. The JWT token payload (used by `/api/auth/me`) contains `userId` mapped from this `id` field.
+
 **Status Codes:**
 
 - `200 OK` - Authentication successful
