@@ -223,6 +223,293 @@ This endpoint aggregates data from three Etherscan V2 endpoints:
 
 ---
 
+## Authentication & Admin Endpoints
+
+The following endpoints require JWT authentication. Include the JWT token in the `Authorization` header as `Bearer <token>`.
+
+### POST /api/setup/complete
+
+Complete the initial setup wizard. This endpoint is only available when setup is not yet complete.
+
+**Request Body:**
+
+```json
+{
+  "apiKey": "string (required)",
+  "chains": [1, 137, ...] (array of positive integers, min 1, max 20),
+  "adminUsername": "string (required, min 3 chars, max 50 chars)",
+  "adminPassword": "string (required, min 8 chars)",
+  "cacheTtl": 60 (number, optional, default 60, min 10)
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Setup completed successfully"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Setup completed successfully
+- `400 Bad Request` - Invalid data or setup already complete
+- `500 Internal Server Error` - Server error
+
+---
+
+### GET /api/setup/state
+
+Check if initial setup has been completed.
+
+**Parameters:** None
+
+**Response:**
+
+```json
+{
+  "setupComplete": true
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+
+---
+
+### POST /api/auth/login
+
+Authenticate an admin user and receive a JWT token.
+
+**Request Body:**
+
+```json
+{
+  "username": "string (required)",
+  "password": "string (required)"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid",
+    "username": "admin",
+    "role": "admin"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Authentication successful
+- `401 Unauthorized` - Invalid credentials
+- `400 Bad Request` - Invalid request data
+
+---
+
+### POST /api/auth/logout
+
+Logout the current user. (Client-side token removal)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+
+---
+
+### GET /api/auth/me
+
+Get current authenticated user information.
+
+**Headers:**
+
+- `Authorization: Bearer <token>` (required)
+
+**Response:**
+
+```json
+{
+  "user": {
+    "userId": "uuid",
+    "username": "admin",
+    "role": "admin"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+- `401 Unauthorized` - Invalid or missing token
+
+---
+
+### GET /api/admin/settings
+
+Get current application settings.
+
+**Headers:**
+
+- `Authorization: Bearer <token>` (required)
+
+**Response:**
+
+```json
+{
+  "chains": [1, 10, 137],
+  "cacheTtl": 60,
+  "apiKeySet": true,
+  "apiKeyLastValidated": "2024-01-15T10:30:00Z"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+- `401 Unauthorized` - Invalid or missing token
+- `404 Not Found` - Settings not found
+
+---
+
+### PUT /api/admin/settings
+
+Update application settings.
+
+**Headers:**
+
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+
+```json
+{
+  "chains": [1, 10, 137, 42161] (optional),
+  "cacheTtl": 120 (optional, min 10)
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "settings": {
+    "chains": [1, 10, 137, 42161],
+    "cacheTtl": 120
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+- `400 Bad Request` - Invalid data
+- `401 Unauthorized` - Invalid or missing token
+
+---
+
+### PUT /api/admin/api-key
+
+Update the Etherscan API key.
+
+**Headers:**
+
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+
+```json
+{
+  "apiKey": "new-api-key-string"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "API key updated successfully"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+- `400 Bad Request` - Invalid or empty API key
+- `401 Unauthorized` - Invalid or missing token
+
+---
+
+### POST /api/admin/cache/clear
+
+Clear the application cache.
+
+**Headers:**
+
+- `Authorization: Bearer <token>` (required)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Cache cleared successfully"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+- `401 Unauthorized` - Invalid or missing token
+
+---
+
+### GET /api/admin/metrics
+
+Get API usage metrics.
+
+**Headers:**
+
+- `Authorization: Bearer <token>` (required)
+
+**Response:**
+
+```json
+{
+  "usage": {
+    "2024-01-15:chains:n/a": 42,
+    "2024-01-15:address/transfers:1": 15,
+    "2024-01-15:token/info:137": 8
+  },
+  "timestamp": "2024-01-15T14:30:00Z"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Success
+- `401 Unauthorized` - Invalid or missing token
+
+---
+
 ## Future Endpoints
 
 The following endpoints are planned for future releases:
@@ -310,6 +597,43 @@ The API proxies requests to Etherscan's API. Be aware of their rate limits:
 - Free tier: 5 requests/second
 - Consider implementing client-side caching for frequently accessed data
 - Future versions will include server-side caching and rate limit handling
+
+### CORS Configuration
+
+The API uses route-specific CORS policies for security:
+
+- **Public Explorer Routes** (`/api/chains`, `/api/address/*`, `/api/token/*`, `/api/tx/*`):
+  - CORS: `origin: '*'` - Open to all origins
+  - Allows public access from any domain
+  
+- **Setup Routes** (`/api/setup/*`):
+  - CORS: `origin: '*'` - Public access for initial setup
+  
+- **Auth Routes** (`/api/auth/*`):
+  - CORS: Strict origin policy (configurable via `FRONTEND_URL` env variable)
+  - Credentials: enabled
+  - Default: `origin: '*'` if `FRONTEND_URL` not set
+  
+- **Admin Routes** (`/api/admin/*`):
+  - CORS: Strict origin policy (configurable via `FRONTEND_URL` env variable)
+  - Credentials: enabled
+  - Requires JWT authentication
+  - Default: `origin: '*'` if `FRONTEND_URL` not set
+
+In production, set `FRONTEND_URL` environment variable to restrict `/api/auth/*` and `/api/admin/*` access to your frontend domain only.
+
+### JWT Authentication
+
+Protected routes require a JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <token>
+```
+
+- Tokens expire after 7 days
+- Generated using the `JWT_SECRET` environment variable
+- Include user ID, username, and role in the payload
+- Client should store token in localStorage or secure cookie
 
 ### Usage Analytics
 
