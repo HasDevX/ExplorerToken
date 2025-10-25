@@ -1,9 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
+import { rateLimit } from '@/middleware/rateLimit';
 import * as db from '@/services/db';
 
 export const setupRouter = Router();
+
+// Apply rate limiting to prevent brute force attempts on setup
+setupRouter.use(rateLimit);
 
 /**
  * GET /api/setup/state

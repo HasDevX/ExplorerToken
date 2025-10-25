@@ -3,11 +3,15 @@ import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { requireAuth, AuthRequest } from '@/middleware/auth';
+import { rateLimit } from '@/middleware/rateLimit';
 import * as db from '@/services/db';
 import * as cache from '@/services/cache';
 import { env } from '@/config/env';
 
 export const adminRouter = Router();
+
+// Apply rate limiting to all admin routes to prevent brute force and DoS attacks
+adminRouter.use(rateLimit);
 
 /**
  * POST /api/auth/login
