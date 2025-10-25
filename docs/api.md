@@ -223,6 +223,82 @@ This endpoint aggregates data from three Etherscan V2 endpoints:
 
 ---
 
+### GET /api/token/:chainId/:address/holders
+
+Returns token holders with pagination for a specific token contract.
+
+**Path Parameters:**
+
+- `chainId` (integer) - The blockchain chain ID (must be a positive integer)
+- `address` (string) - Token contract address (must be `0x` followed by 40 hexadecimal characters)
+
+**Query Parameters:**
+
+- `page` (integer, optional) - Page number for pagination (default: 1)
+- `offset` (integer, optional) - Number of results per page, between 1-100 (default: 25)
+
+**Example Request:**
+
+```
+GET /api/token/1/0xdAC17F958D2ee523a2206206994597C13D831ec7/holders?page=1&offset=25
+```
+
+**Response:**
+
+```json
+{
+  "chainId": 1,
+  "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  "page": 1,
+  "offset": 25,
+  "data": [
+    {
+      "address": "0x1234567890123456789012345678901234567890",
+      "balanceRaw": "1000000000000000000000",
+      "percent": 10.5
+    },
+    {
+      "address": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+      "balanceRaw": "500000000000000000000",
+      "percent": 5.25
+    }
+  ]
+}
+```
+
+**Response Fields:**
+
+- `chainId` (number) - The blockchain chain ID
+- `address` (string) - The token contract address
+- `page` (number) - Current page number
+- `offset` (number) - Number of results per page
+- `data` (array) - Array of holder objects
+  - `address` (string) - Holder's address
+  - `balanceRaw` (string) - Token balance in base units (raw value)
+  - `percent` (number, optional) - Percentage of total supply held
+
+**Status Codes:**
+
+- `200 OK` - Success
+- `400 Bad Request` - Invalid parameters (invalid chainId, address format, or query parameters)
+- `502 Bad Gateway` - Upstream Etherscan API error (including rate limit exceeded)
+
+**Upstream Mapping:**
+
+This endpoint uses a path resolver that:
+1. First tries `module=token&action=tokenholderlist` with pagination support
+2. Falls back to `module=token&action=topholders` if the vendor expects it
+
+Both endpoints are documented at:
+- [Token Holder List Documentation](https://docs.etherscan.io/api-endpoints/tokens#get-token-holder-list-by-contract-address)
+
+**Cache:**
+
+- Responses are cached for 180 seconds (3 minutes)
+- Cache key includes chainId, address, page, and offset for proper pagination
+
+---
+
 ## Authentication & Admin Endpoints
 
 The following endpoints require JWT authentication. Include the JWT token in the `Authorization` header as `Bearer <token>`.
@@ -511,19 +587,6 @@ Get API usage metrics.
 - `401 Unauthorized` - Invalid or missing token
 
 ---
-
-## Future Endpoints
-
-The following endpoints are planned for future releases:
-
-### GET /api/token/:chainId/:address/holders
-
-Returns top token holders for a specific token contract.
-
-**Upstream Mapping:**
-
-- Will use `module=token&action=topholders`
-- [Documentation](https://docs.etherscan.io/api-endpoints/tokens#get-token-holder-list-by-contract-address)
 
 ---
 
