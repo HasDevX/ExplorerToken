@@ -132,10 +132,9 @@ export async function findAdminByUsername(username: string): Promise<AdminUser |
   return result.rows[0] || null;
 }
 
-export async function updateLastLogin(userId: string): Promise<void> {
+export async function updateLastLogin(_userId: string): Promise<void> {
   // This is a no-op now since we removed last_login_at column
   // Keeping the function for backward compatibility
-  void userId;
 }
 
 /**

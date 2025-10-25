@@ -47,7 +47,7 @@ adminRouter.post('/login', async (req: Request, res: Response) => {
     }
 
     // Update last login (no-op for now but kept for future use)
-    await db.updateLastLogin(admin.id);
+    db.updateLastLogin(admin.id);
 
     // Generate JWT token
     const token = jwt.sign(
