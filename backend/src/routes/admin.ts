@@ -10,14 +10,11 @@ import { env } from '@/config/env';
 
 export const adminRouter = Router();
 
-// Apply rate limiting to all admin routes to prevent brute force and DoS attacks
-adminRouter.use(rateLimit);
-
 /**
  * POST /api/auth/login
  * Login endpoint - returns JWT token
  */
-adminRouter.post('/login', async (req: Request, res: Response) => {
+adminRouter.post('/login', rateLimit, async (req: Request, res: Response) => {
   try {
     // Validate request body
     const loginSchema = z.object({
@@ -78,7 +75,7 @@ adminRouter.post('/login', async (req: Request, res: Response) => {
  * Get current settings (requires auth)
  * Does not return the API key for security
  */
-adminRouter.get('/settings', requireAuth, async (req: AuthRequest, res: Response) => {
+adminRouter.get('/settings', rateLimit, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const settings = await db.getSettings();
     if (!settings) {
@@ -102,7 +99,7 @@ adminRouter.get('/settings', requireAuth, async (req: AuthRequest, res: Response
  * PUT /api/admin/settings
  * Update chains and cache TTL (requires auth)
  */
-adminRouter.put('/settings', requireAuth, async (req: AuthRequest, res: Response) => {
+adminRouter.put('/settings', rateLimit, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     // Validate request body
     const settingsSchema = z.object({
@@ -142,7 +139,7 @@ adminRouter.put('/settings', requireAuth, async (req: AuthRequest, res: Response
  * PUT /api/admin/apikey
  * Update Etherscan API key (requires auth)
  */
-adminRouter.put('/apikey', requireAuth, async (req: AuthRequest, res: Response) => {
+adminRouter.put('/apikey', rateLimit, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     // Validate request body
     const apiKeySchema = z.object({
@@ -174,12 +171,17 @@ adminRouter.put('/apikey', requireAuth, async (req: AuthRequest, res: Response) 
  * POST /api/admin/cache/clear
  * Clear all cache entries (requires auth)
  */
-adminRouter.post('/cache/clear', requireAuth, async (req: AuthRequest, res: Response) => {
-  try {
-    await cache.flushAll();
-    res.json({ message: 'Cache cleared successfully' });
-  } catch (error) {
-    console.error('Error clearing cache:', error);
-    res.status(500).json({ error: 'Failed to clear cache' });
+adminRouter.post(
+  '/cache/clear',
+  rateLimit,
+  requireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      await cache.flushAll();
+      res.json({ message: 'Cache cleared successfully' });
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      res.status(500).json({ error: 'Failed to clear cache' });
+    }
   }
-});
+);
