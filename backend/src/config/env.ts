@@ -21,6 +21,22 @@ const envSchema = z.object({
       message: 'DATABASE_URL must start with postgres:// or postgresql://',
     }),
   REDIS_URL: z.string().optional(),
+  CACHE_DEFAULT_TTL: z
+    .string()
+    .optional()
+    .default('60')
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => !isNaN(val) && val > 0, {
+      message: 'CACHE_DEFAULT_TTL must be a positive number',
+    }),
+  RATE_LIMIT_PER_MIN: z
+    .string()
+    .optional()
+    .default('60')
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => !isNaN(val) && val > 0, {
+      message: 'RATE_LIMIT_PER_MIN must be a positive number',
+    }),
   ETHERSCAN_API_KEY: z.string().min(1, { message: 'ETHERSCAN_API_KEY is required' }),
 });
 

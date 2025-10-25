@@ -6,8 +6,13 @@ import {
   getTokenInfo,
   EtherscanError,
 } from '@/services/etherscanClient';
+import * as cache from '@/services/cache';
+import { rateLimit } from '@/middleware/rateLimit';
 
 export const explorerRouter = Router();
+
+// Apply rate limiting to all routes
+explorerRouter.use(rateLimit);
 
 // ============================================================================
 // In-Memory Usage Logging
@@ -165,6 +170,13 @@ explorerRouter.get('/address/:chainId/:address/transfers', async (req: Request, 
 
     recordUsage('address/transfers', chainId);
 
+    // Try to get from cache
+    const cacheKey = `transfers:${chainId}:${address}:${page}:${offset}:${sort}`;
+    const cached = await cache.get(cacheKey);
+    if (cached !== null) {
+      return res.json(cached);
+    }
+
     // Call Etherscan client
     const data = await getTokenTransfers({
       chainId,
@@ -174,14 +186,19 @@ explorerRouter.get('/address/:chainId/:address/transfers', async (req: Request, 
       sort,
     });
 
-    res.json({
+    const response = {
       chainId,
       address,
       page,
       offset,
       sort,
       data,
-    });
+    };
+
+    // Cache the response for 30 seconds
+    await cache.set(cacheKey, response, 30);
+
+    res.json(response);
   } catch (error) {
     handleRouteError(res, error);
   }
@@ -206,11 +223,21 @@ explorerRouter.get('/token/:chainId/:address/info', async (req: Request, res: Re
 
     recordUsage('token/info', chainId);
 
+    // Try to get from cache
+    const cacheKey = `tokeninfo:${chainId}:${address}`;
+    const cached = await cache.get(cacheKey);
+    if (cached !== null) {
+      return res.json(cached);
+    }
+
     // Call Etherscan client
     const data = await getTokenInfo({
       chainId,
       contractAddress: address,
     });
+
+    // Cache the response for 300 seconds (5 minutes)
+    await cache.set(cacheKey, data, 300);
 
     res.json(data);
   } catch (error) {
@@ -237,11 +264,21 @@ explorerRouter.get('/tx/:chainId/:hash', async (req: Request, res: Response) => 
 
     recordUsage('tx', chainId);
 
+    // Try to get from cache
+    const cacheKey = `tx:${chainId}:${hash}`;
+    const cached = await cache.get(cacheKey);
+    if (cached !== null) {
+      return res.json(cached);
+    }
+
     // Call Etherscan client
     const data = await getTxDetails({
       chainId,
       txHash: hash,
     });
+
+    // Cache the response for 60 seconds
+    await cache.set(cacheKey, data, 60);
 
     res.json(data);
   } catch (error) {
