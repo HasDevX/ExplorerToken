@@ -2,12 +2,9 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticateUser, generateToken } from '@/services/auth';
 import { requireAuth, AuthRequest } from '@/middleware/auth';
-import { rateLimit } from '@/middleware/rateLimit';
+import { loginLimiter } from '@/middleware/rateLimiters';
 
 export const authRouter = Router();
-
-// Apply rate limiting to auth routes to prevent brute force attacks
-authRouter.use(rateLimit);
 
 // Schema for login request
 const LoginSchema = z.object({
@@ -19,7 +16,7 @@ const LoginSchema = z.object({
  * POST /api/auth/login
  * Authenticate admin user and return JWT token
  */
-authRouter.post('/login', async (req: Request, res: Response) => {
+authRouter.post('/login', loginLimiter, async (req: Request, res: Response) => {
   try {
     // Validate request body
     const validation = LoginSchema.safeParse(req.body);

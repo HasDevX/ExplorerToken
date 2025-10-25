@@ -16,6 +16,9 @@ initCache().catch((error) => {
 // Create Express application
 const app = express();
 
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
 // Apply middleware
 app.use(helmet());
 // Note: CORS is now applied per-route in registerRoutes

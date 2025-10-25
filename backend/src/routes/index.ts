@@ -1,9 +1,9 @@
 import { Express, Request, Response } from 'express';
-import cors from 'cors';
 import { explorerRouter } from '@/routes/explorer';
 import { setupRouter } from '@/routes/setup';
 import { authRouter } from '@/routes/auth';
 import { adminRouter } from '@/routes/admin';
+import { strictCors } from '@/config/cors';
 
 /**
  * Register all application routes
@@ -16,35 +16,15 @@ export function registerRoutes(app: Express, setupComplete: boolean): void {
     res.json({ ok: true });
   });
 
-  // Setup routes - always available (with public CORS for initial setup access)
-  // Note: This is intentionally permissive as setup must be accessible before configuration
-  app.use('/api/setup', cors({ origin: '*' }), setupRouter);
+  // Setup routes - available without additional CORS configuration
+  app.use('/api/setup', setupRouter);
 
-  // Auth routes - configurable CORS for security
-  // In production, set FRONTEND_URL environment variable to restrict access
-  app.use(
-    '/api/auth',
-    cors({
-      origin: process.env.FRONTEND_URL || '*',
-      credentials: true,
-    }),
-    authRouter
-  );
+  // Sensitive groups → strict CORS
+  app.use('/api/auth', strictCors, authRouter);
+  app.use('/api/admin', strictCors, adminRouter);
 
-  // Admin routes - configurable CORS for security, requires authentication
-  // In production, set FRONTEND_URL environment variable to restrict access
-  app.use(
-    '/api/admin',
-    cors({
-      origin: process.env.FRONTEND_URL || '*',
-      credentials: true,
-    }),
-    adminRouter
-  );
-
-  // Mount explorer API routes - public CORS for public explorer access
-  // Note: This is intentionally permissive for public blockchain data access
-  app.use('/api', cors({ origin: '*' }), explorerRouter);
+  // Explorer routes rely on same-origin (or dev proxy) without wildcard CORS
+  app.use('/api', explorerRouter);
 
   // Additional routes can be registered here based on setupComplete flag
   // For example, only expose certain endpoints after DB migrations are complete
