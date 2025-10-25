@@ -14,7 +14,11 @@ export function TxPage() {
     queryFn: getChains,
   });
 
-  const { data: tx, isLoading, error } = useQuery({
+  const {
+    data: tx,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['tx', chainIdNum, hash],
     queryFn: () => getTx(chainIdNum, hash!),
     enabled: !!hash,

@@ -20,13 +20,21 @@ export function AddressPage() {
     queryFn: getChains,
   });
 
-  const { data: transfers, isLoading: transfersLoading, error: transfersError } = useQuery({
+  const {
+    data: transfers,
+    isLoading: transfersLoading,
+    error: transfersError,
+  } = useQuery({
     queryKey: ['transfers', chainIdNum, address, page, offset],
     queryFn: () => getTransfers(chainIdNum, address!, { page, offset, sort: 'desc' }),
     enabled: !!address && activeTab === 'transfers',
   });
 
-  const { data: tokenInfo, isLoading: infoLoading, error: infoError } = useQuery({
+  const {
+    data: tokenInfo,
+    isLoading: infoLoading,
+    error: infoError,
+  } = useQuery({
     queryKey: ['tokenInfo', chainIdNum, address],
     queryFn: () => getTokenInfo(chainIdNum, address!),
     enabled: !!address && activeTab === 'info',
@@ -146,7 +154,9 @@ export function AddressPage() {
             {activeTab === 'info' && (
               <div>
                 {infoLoading && <div className="text-gray-600">Loading token info...</div>}
-                {infoError && <div className="text-red-600">Error: {(infoError as Error).message}</div>}
+                {infoError && (
+                  <div className="text-red-600">Error: {(infoError as Error).message}</div>
+                )}
                 {tokenInfo && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -175,7 +185,9 @@ export function AddressPage() {
                     </div>
                     {(tokenInfo.website || tokenInfo.twitter || tokenInfo.github) && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500 block mb-2">Links</label>
+                        <label className="text-sm font-medium text-gray-500 block mb-2">
+                          Links
+                        </label>
                         <div className="flex gap-4">
                           {tokenInfo.website && (
                             <a

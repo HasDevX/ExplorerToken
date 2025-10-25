@@ -3,7 +3,11 @@ import { getChains } from '@/lib/api';
 import { SearchBar } from '@/components/SearchBar';
 
 export function Home() {
-  const { data: chains, isLoading, error } = useQuery({
+  const {
+    data: chains,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['chains'],
     queryFn: getChains,
   });
@@ -32,9 +36,7 @@ export function Home() {
           <p className="text-lg text-gray-600">Multi-chain Token Explorer</p>
         </div>
 
-        <div className="mb-8">
-          {chains && <SearchBar chains={chains} />}
-        </div>
+        <div className="mb-8">{chains && <SearchBar chains={chains} />}</div>
 
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg shadow p-6">
