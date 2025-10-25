@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { rateLimit } from '@/middleware/rateLimit';
+import { loginLimiter } from '@/middleware/rateLimiters';
 import * as db from '@/services/db';
 import { env } from '@/config/env';
 
@@ -12,7 +12,7 @@ export const authRouter = Router();
  * POST /api/auth/login
  * Login endpoint - returns JWT token
  */
-authRouter.post('/login', rateLimit, async (req: Request, res: Response) => {
+authRouter.post('/login', loginLimiter, async (req: Request, res: Response) => {
   try {
     const loginSchema = z.object({
       username: z.string().trim().min(1, 'Username is required'),

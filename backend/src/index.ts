@@ -19,6 +19,9 @@ initCache().catch((error) => {
 // Create Express application
 const app = express();
 
+// Trust reverse proxy headers (e.g., X-Forwarded-For)
+app.set('trust proxy', 1);
+
 // Apply middleware
 app.use(helmet());
 app.use(cors({ origin: '*' }));
