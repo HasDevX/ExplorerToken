@@ -302,13 +302,13 @@ export async function getTokenHolders(
       percent: holder.Share ? parseFloat(holder.Share) : undefined,
     }));
   } catch (error) {
+    // Don't retry if it's a feature unavailable error
+    if (error instanceof ProviderFeatureUnavailableError) {
+      throw error;
+    }
+
     // If status !== '1' or 404/400 from provider, retry with topholders
     if (error instanceof EtherscanError) {
-      // Don't retry if it's a feature unavailable error
-      if (error instanceof ProviderFeatureUnavailableError) {
-        throw error;
-      }
-
       // Check if we should retry with topholders
       const shouldRetry =
         error.message.includes('Invalid action') ||
@@ -370,13 +370,13 @@ export async function getTopTokenHolders(
       percent: holder.Share ? parseFloat(holder.Share) : undefined,
     }));
   } catch (error) {
+    // Don't retry if it's a feature unavailable error
+    if (error instanceof ProviderFeatureUnavailableError) {
+      throw error;
+    }
+
     // If status !== '1' or 404/400 from provider, retry with topholders
     if (error instanceof EtherscanError) {
-      // Don't retry if it's a feature unavailable error
-      if (error instanceof ProviderFeatureUnavailableError) {
-        throw error;
-      }
-
       // Check if we should retry with topholders
       const shouldRetry =
         error.message.includes('Invalid action') ||
