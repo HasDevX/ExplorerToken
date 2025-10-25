@@ -60,25 +60,19 @@ describe('Explorer API - Caching and Rate Limiting', () => {
         const txHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
         // First request - should call etherscan client
-        const response1 = await request(app)
-          .get(`/api/tx/1/${txHash}`)
-          .expect(200);
+        const response1 = await request(app).get(`/api/tx/1/${txHash}`).expect(200);
 
         expect(response1.body).toEqual(mockTx);
         expect(etherscanClient.getTxDetails).toHaveBeenCalledTimes(1);
 
         // Second request within TTL - should use cache
-        const response2 = await request(app)
-          .get(`/api/tx/1/${txHash}`)
-          .expect(200);
+        const response2 = await request(app).get(`/api/tx/1/${txHash}`).expect(200);
 
         expect(response2.body).toEqual(mockTx);
         expect(etherscanClient.getTxDetails).toHaveBeenCalledTimes(1); // Still 1, not called again
 
         // Third request - should still use cache
-        const response3 = await request(app)
-          .get(`/api/tx/1/${txHash}`)
-          .expect(200);
+        const response3 = await request(app).get(`/api/tx/1/${txHash}`).expect(200);
 
         expect(response3.body).toEqual(mockTx);
         expect(etherscanClient.getTxDetails).toHaveBeenCalledTimes(1); // Still 1

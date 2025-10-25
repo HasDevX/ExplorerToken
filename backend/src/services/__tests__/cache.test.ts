@@ -92,14 +92,14 @@ describe('Cache Service', () => {
       (redis.setEx as jest.Mock).mockResolvedValue(true);
       (redis.del as jest.Mock).mockResolvedValue(true);
       (redis.flushAll as jest.Mock).mockResolvedValue(true);
-      
+
       await cache.initCache();
     });
 
     it('should attempt to get from Redis first', async () => {
       const testKey = 'test:redis';
       const testValue = { foo: 'bar' };
-      
+
       (redis.get as jest.Mock).mockResolvedValueOnce(JSON.stringify(testValue));
 
       const retrieved = await cache.get(testKey);

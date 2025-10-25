@@ -22,7 +22,7 @@ function refillBucket(bucket: TokenBucket): void {
   const now = Date.now();
   const timePassed = (now - bucket.lastRefill) / 1000; // seconds
   const tokensToAdd = timePassed * REFILL_RATE;
-  
+
   bucket.tokens = Math.min(MAX_TOKENS, bucket.tokens + tokensToAdd);
   bucket.lastRefill = now;
 }
@@ -33,7 +33,7 @@ function refillBucket(bucket: TokenBucket): void {
  */
 export function rateLimit(req: Request, res: Response, next: NextFunction): void {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
-  
+
   // Get or create bucket for this IP
   let bucket = buckets.get(ip);
   if (!bucket) {

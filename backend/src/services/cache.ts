@@ -34,7 +34,10 @@ export async function get<T>(key: string): Promise<T | null> {
         return JSON.parse(value) as T;
       }
     } catch (error) {
-      console.error('Cache get error (Redis):', error instanceof Error ? error.message : String(error));
+      console.error(
+        'Cache get error (Redis):',
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 
@@ -56,7 +59,10 @@ export async function set<T>(key: string, value: T, ttlSec?: number): Promise<vo
     try {
       await redis.setEx(key, ttl, serialized);
     } catch (error) {
-      console.error('Cache set error (Redis):', error instanceof Error ? error.message : String(error));
+      console.error(
+        'Cache set error (Redis):',
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 
@@ -74,7 +80,10 @@ export async function del(key: string): Promise<void> {
     try {
       await redis.del(key);
     } catch (error) {
-      console.error('Cache del error (Redis):', error instanceof Error ? error.message : String(error));
+      console.error(
+        'Cache del error (Redis):',
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 
@@ -92,7 +101,10 @@ export async function flushAll(): Promise<void> {
     try {
       await redis.flushAll();
     } catch (error) {
-      console.error('Cache flushAll error (Redis):', error instanceof Error ? error.message : String(error));
+      console.error(
+        'Cache flushAll error (Redis):',
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 

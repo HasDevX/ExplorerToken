@@ -9,7 +9,9 @@ import { initCache } from '@/services/cache';
 
 // Initialize cache on startup
 initCache().catch((error) => {
-  logger.error(`Failed to initialize cache: ${error instanceof Error ? error.message : String(error)}`);
+  logger.error(
+    `Failed to initialize cache: ${error instanceof Error ? error.message : String(error)}`
+  );
 });
 
 // Create Express application

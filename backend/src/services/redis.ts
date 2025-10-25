@@ -27,7 +27,10 @@ export async function connect(): Promise<boolean> {
     isConnected = true;
     return true;
   } catch (error) {
-    console.error('Failed to connect to Redis:', error instanceof Error ? error.message : String(error));
+    console.error(
+      'Failed to connect to Redis:',
+      error instanceof Error ? error.message : String(error)
+    );
     redisClient = null;
     isConnected = false;
     return false;
@@ -113,7 +116,10 @@ export async function disconnect(): Promise<void> {
     try {
       await redisClient.quit();
     } catch (error) {
-      console.error('Redis disconnect error:', error instanceof Error ? error.message : String(error));
+      console.error(
+        'Redis disconnect error:',
+        error instanceof Error ? error.message : String(error)
+      );
     } finally {
       isConnected = false;
       redisClient = null;
