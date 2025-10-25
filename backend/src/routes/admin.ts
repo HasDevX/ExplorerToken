@@ -1,13 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '@/middleware/auth';
+import { rateLimit } from '@/middleware/rateLimit';
 import { getSettings, updateSettings } from '@/services/settings';
 import * as cache from '@/services/cache';
 import { flushUsageLogs } from '@/routes/explorer';
 
 export const adminRouter = Router();
 
-// Apply auth middleware to all admin routes
+// Apply rate limiting and auth middleware to all admin routes
+adminRouter.use(rateLimit);
 adminRouter.use(requireAuth);
 
 // ============================================================================

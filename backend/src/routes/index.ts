@@ -16,10 +16,12 @@ export function registerRoutes(app: Express, setupComplete: boolean): void {
     res.json({ ok: true });
   });
 
-  // Setup routes - always available (with public CORS)
+  // Setup routes - always available (with public CORS for initial setup access)
+  // Note: This is intentionally permissive as setup must be accessible before configuration
   app.use('/api/setup', cors({ origin: '*' }), setupRouter);
 
-  // Auth routes - strict CORS for security
+  // Auth routes - configurable CORS for security
+  // In production, set FRONTEND_URL environment variable to restrict access
   app.use(
     '/api/auth',
     cors({
@@ -29,7 +31,8 @@ export function registerRoutes(app: Express, setupComplete: boolean): void {
     authRouter
   );
 
-  // Admin routes - strict CORS for security, requires authentication
+  // Admin routes - configurable CORS for security, requires authentication
+  // In production, set FRONTEND_URL environment variable to restrict access
   app.use(
     '/api/admin',
     cors({
@@ -39,7 +42,8 @@ export function registerRoutes(app: Express, setupComplete: boolean): void {
     adminRouter
   );
 
-  // Mount explorer API routes - public CORS
+  // Mount explorer API routes - public CORS for public explorer access
+  // Note: This is intentionally permissive for public blockchain data access
   app.use('/api', cors({ origin: '*' }), explorerRouter);
 
   // Additional routes can be registered here based on setupComplete flag
