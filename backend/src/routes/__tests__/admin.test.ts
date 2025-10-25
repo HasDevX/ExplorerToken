@@ -54,7 +54,6 @@ describe('Admin API Routes', () => {
         username: 'admin',
         password_hash: passwordHash,
         role: 'admin',
-        is_active: true,
       });
       (db.updateLastLogin as jest.Mock).mockResolvedValue(undefined);
 
@@ -98,7 +97,6 @@ describe('Admin API Routes', () => {
         username: 'admin',
         password_hash: passwordHash,
         role: 'admin',
-        is_active: true,
       });
 
       const response = await request(app)
@@ -110,27 +108,6 @@ describe('Admin API Routes', () => {
         .expect(401);
 
       expect(response.body).toEqual({ error: 'Invalid credentials' });
-    });
-
-    it('should return 401 for inactive account', async () => {
-      const passwordHash = await bcrypt.hash('password123', 10);
-      (db.findAdminByUsername as jest.Mock).mockResolvedValue({
-        id: 'admin-id',
-        username: 'admin',
-        password_hash: passwordHash,
-        role: 'admin',
-        is_active: false,
-      });
-
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({
-          username: 'admin',
-          password: 'password123',
-        })
-        .expect(401);
-
-      expect(response.body).toEqual({ error: 'Account is disabled' });
     });
 
     it('should return 400 for missing credentials', async () => {

@@ -39,12 +39,6 @@ adminRouter.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    // Check if user is active
-    if (!admin.is_active) {
-      res.status(401).json({ error: 'Account is disabled' });
-      return;
-    }
-
     // Verify password
     const validPassword = await bcrypt.compare(password, admin.password_hash);
     if (!validPassword) {
@@ -52,7 +46,7 @@ adminRouter.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    // Update last login
+    // Update last login (no-op for now but kept for future use)
     await db.updateLastLogin(admin.id);
 
     // Generate JWT token

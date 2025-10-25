@@ -88,14 +88,114 @@ All blockchain data is fetched from Etherscan API v2 (https://api.etherscan.io/v
 - NodeCache (in-process fallback)
 - TTL configured via admin dashboard
 
-### First-Run Setup
+### First-Run Setup (Backend)
 
-On initial deployment, a setup wizard guides you through:
+The backend requires initial configuration before it can serve explorer endpoints. On first deployment:
 
-1. Enter Etherscan API key
-2. Select supported chains
-3. Create admin user
-4. Configure cache TTL settings
+#### 1. Database Setup
+
+Run the database migrations to create required tables:
+
+```bash
+cd backend
+npm run migrate
+```
+
+This creates:
+- `settings` table: Stores Etherscan API key, enabled chains, and cache configuration
+- `admin_users` table: Stores admin credentials (bcrypt-hashed passwords)
+- Other supporting tables for analytics and logging
+
+#### 2. Environment Variables
+
+Ensure your `backend/.env` file has the required variables (see `backend/.env.sample`):
+
+```bash
+PORT=4000
+JWT_SECRET=your-secure-random-secret-at-least-16-chars
+DATABASE_URL=postgresql://user:password@localhost:5432/explorer
+REDIS_URL=redis://localhost:6379  # Optional
+CACHE_DEFAULT_TTL=60
+RATE_LIMIT_PER_MIN=60
+ETHERSCAN_API_KEY=__set_in_runtime_or_secrets__
+```
+
+**Important:** `ETHERSCAN_API_KEY` can be left as a placeholder in the `.env` file—you'll configure it via the setup API.
+
+#### 3. Start the Backend
+
+```bash
+npm run dev
+# Server starts on http://localhost:4000
+```
+
+#### 4. Complete Setup via API
+
+Before the setup is complete, only the `/api/setup/*` and `/health` endpoints are available.
+
+**Check setup status:**
+```bash
+curl http://localhost:4000/api/setup/state
+# Response: { "setup": false }
+```
+
+**Complete setup:**
+```bash
+curl -X POST http://localhost:4000/api/setup/complete \
+  -H "Content-Type: application/json" \
+  -d '{
+    "apiKey": "YOUR_ETHERSCAN_API_KEY",
+    "chains": [
+      { "id": 1, "name": "Ethereum" },
+      { "id": 137, "name": "Polygon" }
+    ],
+    "admin": {
+      "username": "admin",
+      "password": "SecurePassword123"
+    },
+    "cacheTtl": 60
+  }'
+# Response: { "message": "Setup completed successfully" }
+```
+
+After successful setup:
+- The `setup_complete` flag is set to `true`
+- All API endpoints become available
+- The admin user can log in to manage settings
+
+#### 5. Admin Login
+
+After setup, log in to get a JWT token:
+
+```bash
+curl -X POST http://localhost:4000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "SecurePassword123"
+  }'
+# Response: { "token": "eyJhbGciOiJIUzI1NiIs..." }
+```
+
+Use the token in subsequent admin requests:
+
+```bash
+# Get settings
+curl http://localhost:4000/api/admin/settings \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Update API key
+curl -X PUT http://localhost:4000/api/admin/apikey \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "apiKey": "NEW_API_KEY" }'
+
+# Clear cache
+curl -X POST http://localhost:4000/api/admin/cache/clear \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Note:** The frontend Setup Wizard (coming in the next PR) will provide a UI for these steps.
 
 ## Roadmap
 

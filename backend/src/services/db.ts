@@ -108,8 +108,6 @@ export interface AdminUser {
   username: string;
   password_hash: string;
   role: string;
-  is_active: boolean;
-  last_login_at: Date | null;
   created_at: Date;
 }
 
@@ -135,7 +133,9 @@ export async function findAdminByUsername(username: string): Promise<AdminUser |
 }
 
 export async function updateLastLogin(userId: string): Promise<void> {
-  await query('UPDATE admin_users SET last_login_at = now() WHERE id = $1', [userId]);
+  // This is a no-op now since we removed last_login_at column
+  // Keeping the function for backward compatibility
+  void userId;
 }
 
 /**
