@@ -78,6 +78,20 @@ export const TxDetailsSchema = z.object({
   confirmations: z.string().optional(),
 });
 
+export const HolderSchema = z.object({
+  address: z.string(),
+  balanceRaw: z.string(),
+  percent: z.number().optional(),
+});
+
+export const HoldersResponseSchema = z.object({
+  chainId: z.number(),
+  address: z.string(),
+  page: z.number(),
+  offset: z.number(),
+  data: z.array(HolderSchema),
+});
+
 // ============================================================================
 // Type Exports
 // ============================================================================
@@ -87,3 +101,5 @@ export type Transfer = z.infer<typeof TransferSchema>;
 export type TransfersResponse = z.infer<typeof TransfersResponseSchema>;
 export type TokenInfo = z.infer<typeof TokenInfoSchema>;
 export type TxDetails = z.infer<typeof TxDetailsSchema>;
+export type Holder = z.infer<typeof HolderSchema>;
+export type HoldersResponse = z.infer<typeof HoldersResponseSchema>;

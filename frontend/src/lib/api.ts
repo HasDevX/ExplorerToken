@@ -4,10 +4,12 @@ import {
   TransfersResponseSchema,
   TokenInfoSchema,
   TxDetailsSchema,
+  HoldersResponseSchema,
   type Chain,
   type TransfersResponse,
   type TokenInfo,
   type TxDetails,
+  type HoldersResponse,
 } from './validators';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -68,6 +70,25 @@ export async function getTransfers(
 export async function getTokenInfo(chainId: number, address: string): Promise<TokenInfo> {
   const response = await apiClient.get(`/token/${chainId}/${address}/info`);
   return TokenInfoSchema.parse(response.data);
+}
+
+/**
+ * Get token holders for a contract address
+ */
+export async function getHolders(
+  chainId: number,
+  address: string,
+  options?: {
+    page?: number;
+    offset?: number;
+  }
+): Promise<HoldersResponse> {
+  const params = new URLSearchParams();
+  if (options?.page) params.append('page', options.page.toString());
+  if (options?.offset) params.append('offset', options.offset.toString());
+
+  const response = await apiClient.get(`/token/${chainId}/${address}/holders`, { params });
+  return HoldersResponseSchema.parse(response.data);
 }
 
 /**
