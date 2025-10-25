@@ -7,15 +7,15 @@ import * as cache from '@/services/cache';
 
 export const adminRouter = Router();
 
-// Require authentication for all admin routes
-adminRouter.use(requireAuth);
+// Require authentication and apply a base limiter for all admin routes
+adminRouter.use(requireAuth, adminReadLimiter);
 
 /**
  * GET /api/admin/settings
  * Get current settings (requires auth)
  * Does not return the API key for security
  */
-adminRouter.get('/settings', adminReadLimiter, async (req: AuthRequest, res: Response) => {
+adminRouter.get('/settings', async (req: AuthRequest, res: Response) => {
   try {
     const settings = await db.getSettings();
     if (!settings) {
