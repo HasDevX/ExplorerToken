@@ -289,8 +289,9 @@ This endpoint uses a path resolver that:
 1. First tries `module=token&action=tokenholderlist` with pagination support
 2. Falls back to `module=token&action=topholders` if the vendor expects it
 
-Both endpoints are documented at:
-- [Token Holder List Documentation](https://docs.etherscan.io/api-endpoints/tokens#get-token-holder-list-by-contract-address)
+Documentation references:
+- Primary endpoint: [tokenholderlist](https://docs.etherscan.io/api-endpoints/tokens#get-token-holder-list-by-contract-address)
+- Fallback endpoint: [topholders](https://docs.etherscan.io/api-endpoints/tokens#get-token-holder-list-by-contract-address)
 
 **Cache:**
 
