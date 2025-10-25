@@ -35,12 +35,17 @@ describe('Admin API Routes', () => {
     // Generate a valid token for authenticated tests
     validToken = jwt.sign(
       {
-        sub: 'test-user-id',
         username: 'testuser',
         role: 'admin',
       },
       env.JWT_SECRET,
-      { expiresIn: '1h' }
+      {
+        algorithm: 'HS256',
+        subject: 'test-user-id',
+        expiresIn: '1h',
+        issuer: env.JWT_ISSUER,
+        audience: env.JWT_AUDIENCE,
+      }
     );
 
     // Mock cache methods

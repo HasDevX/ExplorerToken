@@ -38,6 +38,17 @@ const envSchema = z.object({
       message: 'RATE_LIMIT_PER_MIN must be a positive number',
     }),
   ETHERSCAN_API_KEY: z.string().min(1, { message: 'ETHERSCAN_API_KEY is required' }),
+  CORS_ALLOW_ORIGINS: z
+    .string()
+    .default('')
+    .transform((s) =>
+      s
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean)
+    ),
+  JWT_ISSUER: z.string().default('explorertoken'),
+  JWT_AUDIENCE: z.string().default('explorertoken-admin'),
 });
 
 // Parse and validate environment variables

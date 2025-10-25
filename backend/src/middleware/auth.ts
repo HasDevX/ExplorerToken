@@ -1,3 +1,4 @@
+
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '@/config/env';
@@ -48,7 +49,12 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     const token = parts[1];
 
     // Verify token
-    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, env.JWT_SECRET, {
+      algorithms: ['HS256'],
+      issuer: env.JWT_ISSUER,
+      audience: env.JWT_AUDIENCE,
+      clockTolerance: 5, // seconds
+    }) as JwtPayload;
 
     // Populate req.user
     req.user = {

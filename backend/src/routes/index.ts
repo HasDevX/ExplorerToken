@@ -3,6 +3,7 @@ import { explorerRouter } from '@/routes/explorer';
 import { setupRouter } from '@/routes/setup';
 import { authRouter } from '@/routes/auth';
 import { adminRouter } from '@/routes/admin';
+import { publicCors, strictCors } from '@/config/cors';
 import * as db from '@/services/db';
 import { logger } from '@/lib/logger';
 import { isSetupReady, setSetupReady } from '@/routes/setupState';
@@ -22,12 +23,12 @@ export function registerRoutes(app: Express): void {
   // Gate all other /api routes until setup completes
   app.use('/api', gateUntilSetupComplete);
 
-  // Mount auth and admin routes
-  app.use('/api/auth', authRouter);
-  app.use('/api/admin', adminRouter);
+  // Mount auth and admin routes with strict CORS
+  app.use('/api/auth', strictCors, authRouter);
+  app.use('/api/admin', strictCors, adminRouter);
 
-  // Mount explorer API routes
-  app.use('/api', explorerRouter);
+  // Mount explorer API routes with public CORS
+  app.use('/api', publicCors, explorerRouter);
 }
 
 let checkingSetupStatus: Promise<void> | null = null;
