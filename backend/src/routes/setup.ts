@@ -75,8 +75,8 @@ setupRouter.post('/complete', async (req: Request, res: Response) => {
     const { apiKey, chains, admin, cacheTtl } = result.data;
 
     // Hash the password
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(admin.password, saltRounds);
+    const rounds = 12; // strong & still fast enough on VPS
+    const passwordHash = await bcrypt.hash(admin.password, rounds);
 
     // Check if username already exists
     const existingAdmin = await db.findAdminByUsername(admin.username);

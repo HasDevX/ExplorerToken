@@ -44,17 +44,13 @@ authRouter.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     await db.updateLastLogin(admin.id);
 
-    const token = jwt.sign(
-      {
-        sub: admin.id,
-        username: admin.username,
-        role: admin.role,
-      },
-      env.JWT_SECRET,
-      {
-        expiresIn: '24h',
-      }
-    );
+    const token = jwt.sign({ username: admin.username, role: admin.role }, env.JWT_SECRET, {
+      algorithm: 'HS256',
+      subject: admin.id,
+      expiresIn: '24h',
+      issuer: env.JWT_ISSUER,
+      audience: env.JWT_AUDIENCE,
+    });
 
     res.json({ token });
   } catch (error) {

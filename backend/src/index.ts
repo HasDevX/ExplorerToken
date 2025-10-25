@@ -1,6 +1,5 @@
 import express from 'express';
 import helmet from 'helmet';
-import cors from 'cors';
 import morgan from 'morgan';
 import { env } from '@/config/env';
 import { logger } from '@/lib/logger';
@@ -21,11 +20,11 @@ const app = express();
 
 // Trust reverse proxy headers (e.g., X-Forwarded-For)
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
 // Apply middleware
 app.use(helmet());
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(morgan('combined'));
 
 /**
