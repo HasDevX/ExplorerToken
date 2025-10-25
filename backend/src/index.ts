@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { registerRoutes } from '@/routes';
 import { initCache } from '@/services/cache';
 import * as db from '@/services/db';
+import { setSetupReady } from '@/routes/setupState';
 
 // Initialize cache on startup
 initCache().catch((error) => {
@@ -43,6 +44,7 @@ async function checkSetupComplete(): Promise<boolean> {
  */
 async function init() {
   const setupComplete = await checkSetupComplete();
+  setSetupReady(setupComplete);
 
   if (setupComplete) {
     logger.info('Setup is complete');
@@ -51,7 +53,7 @@ async function init() {
   }
 
   // Register routes
-  registerRoutes(app, setupComplete);
+  registerRoutes(app);
 
   // Start server
   app.listen(env.PORT, () => {

@@ -1,81 +1,21 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { requireAuth, AuthRequest } from '@/middleware/auth';
 import { rateLimit } from '@/middleware/rateLimit';
 import * as db from '@/services/db';
 import * as cache from '@/services/cache';
-import { env } from '@/config/env';
 
 export const adminRouter = Router();
 
-/**
- * POST /api/auth/login
- * Login endpoint - returns JWT token
- */
-adminRouter.post('/login', rateLimit, async (req: Request, res: Response) => {
-  try {
-    // Validate request body
-    const loginSchema = z.object({
-      username: z.string().min(1, 'Username is required'),
-      password: z.string().min(1, 'Password is required'),
-    });
-
-    const result = loginSchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({
-        error: 'Validation failed',
-        details: result.error.format(),
-      });
-      return;
-    }
-
-    const { username, password } = result.data;
-
-    // Find admin user
-    const admin = await db.findAdminByUsername(username);
-    if (!admin) {
-      res.status(401).json({ error: 'Invalid credentials' });
-      return;
-    }
-
-    // Verify password
-    const validPassword = await bcrypt.compare(password, admin.password_hash);
-    if (!validPassword) {
-      res.status(401).json({ error: 'Invalid credentials' });
-      return;
-    }
-
-    // Update last login (no-op for now but kept for future use)
-    db.updateLastLogin(admin.id);
-
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        sub: admin.id,
-        username: admin.username,
-        role: admin.role,
-      },
-      env.JWT_SECRET,
-      {
-        expiresIn: '24h',
-      }
-    );
-
-    res.json({ token });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
-  }
-});
+adminRouter.use(rateLimit);
+adminRouter.use(requireAuth);
 
 /**
  * GET /api/admin/settings
  * Get current settings (requires auth)
  * Does not return the API key for security
  */
-adminRouter.get('/settings', rateLimit, requireAuth, async (req: AuthRequest, res: Response) => {
+adminRouter.get('/settings', async (req: AuthRequest, res: Response) => {
   try {
     const settings = await db.getSettings();
     if (!settings) {
@@ -99,7 +39,7 @@ adminRouter.get('/settings', rateLimit, requireAuth, async (req: AuthRequest, re
  * PUT /api/admin/settings
  * Update chains and cache TTL (requires auth)
  */
-adminRouter.put('/settings', rateLimit, requireAuth, async (req: AuthRequest, res: Response) => {
+adminRouter.put('/settings', async (req: AuthRequest, res: Response) => {
   try {
     // Validate request body
     const settingsSchema = z.object({
@@ -107,7 +47,7 @@ adminRouter.put('/settings', rateLimit, requireAuth, async (req: AuthRequest, re
         .array(
           z.object({
             id: z.number().int().positive('Chain ID must be a positive integer'),
-            name: z.string().min(1, 'Chain name is required'),
+            name: z.string().trim().min(1, 'Chain name is required'),
           })
         )
         .min(1, 'At least one chain is required'),
@@ -139,11 +79,11 @@ adminRouter.put('/settings', rateLimit, requireAuth, async (req: AuthRequest, re
  * PUT /api/admin/apikey
  * Update Etherscan API key (requires auth)
  */
-adminRouter.put('/apikey', rateLimit, requireAuth, async (req: AuthRequest, res: Response) => {
+adminRouter.put('/apikey', async (req: AuthRequest, res: Response) => {
   try {
     // Validate request body
     const apiKeySchema = z.object({
-      apiKey: z.string().min(1, 'API key is required'),
+      apiKey: z.string().trim().min(1, 'API key is required'),
     });
 
     const result = apiKeySchema.safeParse(req.body);
@@ -171,17 +111,12 @@ adminRouter.put('/apikey', rateLimit, requireAuth, async (req: AuthRequest, res:
  * POST /api/admin/cache/clear
  * Clear all cache entries (requires auth)
  */
-adminRouter.post(
-  '/cache/clear',
-  rateLimit,
-  requireAuth,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      await cache.flushAll();
-      res.json({ message: 'Cache cleared successfully' });
-    } catch (error) {
-      console.error('Error clearing cache:', error);
-      res.status(500).json({ error: 'Failed to clear cache' });
-    }
+adminRouter.post('/cache/clear', async (_req: AuthRequest, res: Response) => {
+  try {
+    await cache.flushAll();
+    res.json({ message: 'Cache cleared successfully' });
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+    res.status(500).json({ error: 'Failed to clear cache' });
   }
-);
+});

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { rateLimit } from '@/middleware/rateLimit';
 import * as db from '@/services/db';
+import { markSetupComplete } from '@/routes/setupState';
 
 export const setupRouter = Router();
 
@@ -38,18 +39,19 @@ setupRouter.post('/complete', async (req: Request, res: Response) => {
 
     // Validate request body
     const setupSchema = z.object({
-      apiKey: z.string().min(1, 'API key is required'),
+      apiKey: z.string().trim().min(1, 'API key is required'),
       chains: z
         .array(
           z.object({
             id: z.number().int().positive('Chain ID must be a positive integer'),
-            name: z.string().min(1, 'Chain name is required'),
+            name: z.string().trim().min(1, 'Chain name is required'),
           })
         )
         .min(1, 'At least one chain is required'),
       admin: z.object({
         username: z
           .string()
+          .trim()
           .min(3, 'Username must be at least 3 characters')
           .max(50, 'Username must be at most 50 characters')
           .regex(
@@ -84,7 +86,11 @@ setupRouter.post('/complete', async (req: Request, res: Response) => {
     }
 
     // Create admin user
-    await db.createAdminUser(admin.username, passwordHash);
+    await db.createAdminUser({
+      username: admin.username,
+      password_hash: passwordHash,
+      role: 'admin',
+    });
 
     // Update settings
     await db.upsertSettings({
@@ -93,6 +99,8 @@ setupRouter.post('/complete', async (req: Request, res: Response) => {
       cache_ttl: cacheTtl || 60,
       setup_complete: true,
     });
+
+    markSetupComplete();
 
     res.status(201).json({ message: 'Setup completed successfully' });
   } catch (error) {

@@ -101,10 +101,11 @@ describe('Setup API Routes', () => {
       const response = await request(app).post('/api/setup/complete').send(setupData).expect(201);
 
       expect(response.body).toEqual({ message: 'Setup completed successfully' });
-      expect(db.createAdminUser).toHaveBeenCalledWith(
-        'admin',
-        expect.any(String) // bcrypt hash
-      );
+      expect(db.createAdminUser).toHaveBeenCalledWith({
+        username: 'admin',
+        password_hash: expect.any(String),
+        role: 'admin',
+      });
       expect(db.upsertSettings).toHaveBeenCalledWith({
         etherscan_api_key: 'test-etherscan-key',
         chains: [

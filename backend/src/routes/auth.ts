@@ -1,0 +1,64 @@
+import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { rateLimit } from '@/middleware/rateLimit';
+import * as db from '@/services/db';
+import { env } from '@/config/env';
+
+export const authRouter = Router();
+
+/**
+ * POST /api/auth/login
+ * Login endpoint - returns JWT token
+ */
+authRouter.post('/login', rateLimit, async (req: Request, res: Response) => {
+  try {
+    const loginSchema = z.object({
+      username: z.string().trim().min(1, 'Username is required'),
+      password: z.string().min(1, 'Password is required'),
+    });
+
+    const result = loginSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: result.error.format(),
+      });
+      return;
+    }
+
+    const { username, password } = result.data;
+
+    const admin = await db.findAdminByUsername(username);
+    if (!admin) {
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
+    }
+
+    const validPassword = await bcrypt.compare(password, admin.password_hash);
+    if (!validPassword) {
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
+    }
+
+    await db.updateLastLogin(admin.id);
+
+    const token = jwt.sign(
+      {
+        sub: admin.id,
+        username: admin.username,
+        role: admin.role,
+      },
+      env.JWT_SECRET,
+      {
+        expiresIn: '24h',
+      }
+    );
+
+    res.json({ token });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});

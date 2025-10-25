@@ -102,6 +102,7 @@ npm run migrate
 ```
 
 This creates:
+
 - `settings` table: Stores Etherscan API key, enabled chains, and cache configuration
 - `admin_users` table: Stores admin credentials (bcrypt-hashed passwords)
 - Other supporting tables for analytics and logging
@@ -134,12 +135,14 @@ npm run dev
 Before the setup is complete, only the `/api/setup/*` and `/health` endpoints are available.
 
 **Check setup status:**
+
 ```bash
 curl http://localhost:4000/api/setup/state
 # Response: { "setup": false }
 ```
 
 **Complete setup:**
+
 ```bash
 curl -X POST http://localhost:4000/api/setup/complete \
   -H "Content-Type: application/json" \
@@ -159,6 +162,7 @@ curl -X POST http://localhost:4000/api/setup/complete \
 ```
 
 After successful setup:
+
 - The `setup_complete` flag is set to `true`
 - All API endpoints become available
 - The admin user can log in to manage settings

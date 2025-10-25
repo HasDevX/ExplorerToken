@@ -8,6 +8,7 @@ import express, { Express } from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { authRouter } from '../auth';
 import { adminRouter } from '../admin';
 import * as db from '@/services/db';
 import * as cache from '@/services/cache';
@@ -25,7 +26,7 @@ describe('Admin API Routes', () => {
     // Set up Express app with router
     app = express();
     app.use(express.json());
-    app.use('/api/auth', adminRouter);
+    app.use('/api/auth', authRouter);
     app.use('/api/admin', adminRouter);
 
     // Clear all mocks

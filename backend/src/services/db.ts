@@ -30,16 +30,18 @@ export interface Settings {
 }
 
 export async function getSettings(): Promise<Settings | null> {
-  const result = await query<Settings>('SELECT * FROM settings LIMIT 1');
+  const result = await query<Settings>('SELECT * FROM settings ORDER BY updated_at DESC LIMIT 1');
   return result.rows[0] || null;
 }
 
-export async function upsertSettings(data: {
-  etherscan_api_key?: string;
-  chains?: { id: number; name: string }[];
-  cache_ttl?: number;
-  setup_complete?: boolean;
-}): Promise<Settings> {
+export type UpsertSettingsInput = Partial<{
+  etherscan_api_key: string;
+  chains: { id: number; name: string }[];
+  cache_ttl: number;
+  setup_complete: boolean;
+}>;
+
+export async function upsertSettings(data: UpsertSettingsInput): Promise<Settings> {
   const existing = await getSettings();
 
   if (existing) {
@@ -111,16 +113,22 @@ export interface AdminUser {
   created_at: Date;
 }
 
-export async function createAdminUser(
-  username: string,
-  passwordHash: string,
-  role = 'admin'
-): Promise<AdminUser> {
+export interface CreateAdminUserInput {
+  username: string;
+  password_hash: string;
+  role?: string;
+}
+
+export async function createAdminUser({
+  username,
+  password_hash,
+  role = 'admin',
+}: CreateAdminUserInput): Promise<AdminUser> {
   const result = await query<AdminUser>(
     `INSERT INTO admin_users (username, password_hash, role)
      VALUES ($1, $2, $3)
      RETURNING *`,
-    [username, passwordHash, role]
+    [username, password_hash, role]
   );
   return result.rows[0];
 }
