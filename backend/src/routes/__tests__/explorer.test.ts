@@ -2,11 +2,13 @@
 process.env.ETHERSCAN_API_KEY = 'test-api-key';
 process.env.JWT_SECRET = 'test-jwt-secret-minimum-16-chars';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+process.env.RATE_LIMIT_PER_MIN = '1000'; // High limit to avoid rate limiting in tests
 
 import express, { Express } from 'express';
 import request from 'supertest';
 import { explorerRouter } from '../explorer';
 import * as etherscanClient from '@/services/etherscanClient';
+import * as cache from '@/services/cache';
 
 // Mock only the functions, not the entire module
 jest.mock('@/services/etherscanClient', () => {
@@ -23,14 +25,15 @@ jest.mock('@/services/etherscanClient', () => {
 describe('Explorer API Routes', () => {
   let app: Express;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Set up Express app with router
     app = express();
     app.use(express.json());
     app.use('/api', explorerRouter);
 
-    // Clear all mocks
+    // Clear all mocks and cache
     jest.clearAllMocks();
+    await cache.flushAll();
   });
 
   describe('GET /api/chains', () => {
