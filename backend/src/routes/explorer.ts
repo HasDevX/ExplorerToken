@@ -6,6 +6,7 @@ import {
   getTokenInfo,
   getTokenHolders,
   EtherscanError,
+  ProviderFeatureUnavailableError,
 } from '@/services/etherscanClient';
 import * as cache from '@/services/cache';
 import { rateLimit } from '@/middleware/rateLimit';
@@ -117,14 +118,28 @@ const HoldersQuerySchema = z.object({
  * Returns appropriate HTTP status and error response
  */
 function handleRouteError(res: Response, error: unknown): void {
+  // Check for ProviderFeatureUnavailableError first
+  if (
+    error instanceof ProviderFeatureUnavailableError ||
+    (error &&
+      typeof error === 'object' &&
+      error.constructor?.name === 'ProviderFeatureUnavailableError')
+  ) {
+    res.status(501).json({
+      error: 'Holders not available on this chain or plan',
+    });
+    return;
+  }
+
   // Check if error is an EtherscanError by looking for its unique properties
   if (
     error instanceof EtherscanError ||
     (error && typeof error === 'object' && 'endpoint' in error)
   ) {
     res.status(502).json({
-      error: (error as EtherscanError).message,
-      endpoint: (error as EtherscanError).endpoint,
+      error: 'Upstream error',
+      code: 'ETHERSCAN_ERROR',
+      details: (error as EtherscanError).message,
     });
     return;
   }

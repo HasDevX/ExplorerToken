@@ -167,8 +167,9 @@ describe('Explorer API Routes', () => {
         .expect(502);
 
       expect(response.body).toEqual({
-        error: 'API rate limit exceeded',
-        endpoint: 'https://api.etherscan.io/v2/api',
+        error: 'Upstream error',
+        code: 'ETHERSCAN_ERROR',
+        details: 'API rate limit exceeded',
       });
     });
   });
@@ -225,8 +226,9 @@ describe('Explorer API Routes', () => {
         .expect(502);
 
       expect(response.body).toEqual({
-        error: 'Contract not found',
-        endpoint: 'https://api.etherscan.io/v2/api',
+        error: 'Upstream error',
+        code: 'ETHERSCAN_ERROR',
+        details: 'Contract not found',
       });
     });
   });
@@ -304,8 +306,9 @@ describe('Explorer API Routes', () => {
         .expect(502);
 
       expect(response.body).toEqual({
-        error: 'Transaction not found',
-        endpoint: 'https://api.etherscan.io/v2/api',
+        error: 'Upstream error',
+        code: 'ETHERSCAN_ERROR',
+        details: 'Transaction not found',
       });
     });
   });
@@ -443,8 +446,27 @@ describe('Explorer API Routes', () => {
         .expect(502);
 
       expect(response.body).toEqual({
-        error: 'API rate limit exceeded',
-        endpoint: 'https://api.etherscan.io/v2/api',
+        error: 'Upstream error',
+        code: 'ETHERSCAN_ERROR',
+        details: 'API rate limit exceeded',
+      });
+    });
+
+    it('should return 501 when provider feature is unavailable', async () => {
+      (etherscanClient.getTokenHolders as jest.Mock).mockRejectedValue(
+        new etherscanClient.ProviderFeatureUnavailableError(
+          'Feature not available: not available',
+          'https://api.etherscan.io/v2/api',
+          1
+        )
+      );
+
+      const response = await request(app)
+        .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .expect(501);
+
+      expect(response.body).toEqual({
+        error: 'Holders not available on this chain or plan',
       });
     });
   });

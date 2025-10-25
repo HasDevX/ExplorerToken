@@ -10,7 +10,7 @@ import { BASE_URL, makeParams } from '@/config/etherscan';
 const NO_ERROR_MESSAGES = ['No records found', 'No transactions found'];
 
 // ============================================================================
-// Custom Error Class
+// Custom Error Classes
 // ============================================================================
 
 export class EtherscanError extends Error {
@@ -22,6 +22,17 @@ export class EtherscanError extends Error {
   ) {
     super(message);
     this.name = 'EtherscanError';
+  }
+}
+
+export class ProviderFeatureUnavailableError extends Error {
+  constructor(
+    message: string,
+    public endpoint: string,
+    public chainId: number
+  ) {
+    super(message);
+    this.name = 'ProviderFeatureUnavailableError';
   }
 }
 
@@ -169,6 +180,21 @@ async function makeRequest<T>(
       );
     }
 
+    // Check for feature unavailable indicators (402, 403, NOTOK with specific messages)
+    if (
+      parsed.data.status === '0' &&
+      (parsed.data.message === 'NOTOK' ||
+        parsed.data.message.toLowerCase().includes('not available') ||
+        parsed.data.message.toLowerCase().includes('plan') ||
+        parsed.data.message.toLowerCase().includes('subscription'))
+    ) {
+      throw new ProviderFeatureUnavailableError(
+        `Feature not available: ${parsed.data.message}`,
+        url,
+        chainId
+      );
+    }
+
     // Check status - allow certain messages even with status '0'
     if (parsed.data.status === '0' && !NO_ERROR_MESSAGES.includes(parsed.data.message)) {
       throw new EtherscanError(`Etherscan API error: ${parsed.data.message}`, url, chainId);
@@ -188,11 +214,20 @@ async function makeRequest<T>(
 
     return resultParsed.data;
   } catch (error) {
-    if (error instanceof EtherscanError) {
+    if (error instanceof EtherscanError || error instanceof ProviderFeatureUnavailableError) {
       throw error;
     }
 
     if (axios.isAxiosError(error)) {
+      // Check for HTTP status codes indicating feature unavailable
+      if (error.response?.status === 402 || error.response?.status === 403) {
+        throw new ProviderFeatureUnavailableError(
+          `Feature not available (HTTP ${error.response.status})`,
+          url,
+          chainId
+        );
+      }
+
       throw new EtherscanError(`Network error: ${error.message}`, url, chainId, error);
     }
 
@@ -241,7 +276,7 @@ export async function getTokenTransfers(
 
 /**
  * Get token holders with pagination support
- * Implements path resolver: tries tokenholderlist first, falls back to topholders
+ * Implements resolver pattern: tries tokenholderlist first, falls back to topholders
  * @param opts - Options including chainId, contractAddress, and pagination
  * @returns Array of normalized holders
  */
@@ -250,7 +285,7 @@ export async function getTokenHolders(
 ): Promise<NormalizedHolder[]> {
   const { chainId, contractAddress, page, offset } = opts;
 
-  // Try tokenholderlist first (standard endpoint)
+  // Try tokenholderlist first (module=token&action=tokenholderlist)
   let params = makeParams('token', 'tokenholderlist', chainId, {
     contractaddress: contractAddress,
     page,
@@ -267,32 +302,49 @@ export async function getTokenHolders(
       percent: holder.Share ? parseFloat(holder.Share) : undefined,
     }));
   } catch (error) {
-    // If tokenholderlist fails, try topholders as fallback
-    // Some Etherscan instances might only support topholders
-    if (error instanceof EtherscanError && error.message.includes('Invalid action')) {
-      params = makeParams('token', 'topholders', chainId, {
-        contractaddress: contractAddress,
-        page,
-        offset,
-      });
+    // If status !== '1' or 404/400 from provider, retry with topholders
+    if (error instanceof EtherscanError) {
+      // Don't retry if it's a feature unavailable error
+      if (error instanceof ProviderFeatureUnavailableError) {
+        throw error;
+      }
 
-      const result = await makeRequest(BASE_URL, params, chainId, z.array(TopHolderSchema));
+      // Check if we should retry with topholders
+      const shouldRetry =
+        error.message.includes('Invalid action') ||
+        error.message.includes('404') ||
+        error.message.includes('400') ||
+        (error.originalError &&
+          axios.isAxiosError(error.originalError) &&
+          (error.originalError.response?.status === 404 ||
+            error.originalError.response?.status === 400));
 
-      return result.map((holder) => ({
-        address: holder.TokenHolderAddress,
-        balanceRaw: holder.TokenHolderQuantity,
-        percent: holder.Share ? parseFloat(holder.Share) : undefined,
-      }));
+      if (shouldRetry) {
+        // Retry with topholders (module=token&action=topholders)
+        params = makeParams('token', 'topholders', chainId, {
+          contractaddress: contractAddress,
+          page,
+          offset,
+        });
+
+        const result = await makeRequest(BASE_URL, params, chainId, z.array(TopHolderSchema));
+
+        return result.map((holder) => ({
+          address: holder.TokenHolderAddress,
+          balanceRaw: holder.TokenHolderQuantity,
+          percent: holder.Share ? parseFloat(holder.Share) : undefined,
+        }));
+      }
     }
 
-    // Re-throw if it's a different error
+    // Re-throw if we couldn't handle it
     throw error;
   }
 }
 
 /**
- * @deprecated Use getTokenHolders instead for pagination support
- * Get top token holders for a specific token
+ * Get top token holders for a specific token with resolver pattern
+ * Tries tokenholderlist first, falls back to topholders on certain errors
  * @param opts - Options including chainId, contractAddress, and limit
  * @returns Array of normalized holders
  */
@@ -301,12 +353,61 @@ export async function getTopTokenHolders(
 ): Promise<NormalizedHolder[]> {
   const { chainId, contractAddress, limit } = opts;
 
-  return getTokenHolders({
-    chainId,
-    contractAddress,
+  // Try tokenholderlist first (module=token&action=tokenholderlist)
+  let params = makeParams('token', 'tokenholderlist', chainId, {
+    contractaddress: contractAddress,
     page: 1,
     offset: limit || 25,
   });
+
+  try {
+    const result = await makeRequest(BASE_URL, params, chainId, z.array(TopHolderSchema));
+
+    // Normalize the result
+    return result.map((holder) => ({
+      address: holder.TokenHolderAddress,
+      balanceRaw: holder.TokenHolderQuantity,
+      percent: holder.Share ? parseFloat(holder.Share) : undefined,
+    }));
+  } catch (error) {
+    // If status !== '1' or 404/400 from provider, retry with topholders
+    if (error instanceof EtherscanError) {
+      // Don't retry if it's a feature unavailable error
+      if (error instanceof ProviderFeatureUnavailableError) {
+        throw error;
+      }
+
+      // Check if we should retry with topholders
+      const shouldRetry =
+        error.message.includes('Invalid action') ||
+        error.message.includes('404') ||
+        error.message.includes('400') ||
+        (error.originalError &&
+          axios.isAxiosError(error.originalError) &&
+          (error.originalError.response?.status === 404 ||
+            error.originalError.response?.status === 400));
+
+      if (shouldRetry) {
+        // Retry with topholders (module=token&action=topholders)
+        params = makeParams('token', 'topholders', chainId, {
+          contractaddress: contractAddress,
+          page: 1,
+          offset: limit || 25,
+        });
+
+        const result = await makeRequest(BASE_URL, params, chainId, z.array(TopHolderSchema));
+
+        return result.map((holder) => ({
+          address: holder.TokenHolderAddress,
+          balanceRaw: holder.TokenHolderQuantity,
+          percent: holder.Share ? parseFloat(holder.Share) : undefined,
+        }));
+      }
+    }
+
+    // Re-throw if we couldn't handle it
+    throw error;
+  }
 }
 
 /**
