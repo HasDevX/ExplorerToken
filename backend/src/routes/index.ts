@@ -1,5 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { explorerRouter } from '@/routes/explorer';
+import { setupRouter } from '@/routes/setup';
+import { adminRouter } from '@/routes/admin';
 
 /**
  * Register all application routes
@@ -12,12 +14,25 @@ export function registerRoutes(app: Express, setupComplete: boolean): void {
     res.json({ ok: true });
   });
 
+  // Setup routes - always available
+  app.use('/api/setup', setupRouter);
+
+  // If setup is not complete, only expose setup and health endpoints
+  if (!setupComplete) {
+    // Block all other routes except setup and health
+    app.use('/api', (_req: Request, res: Response) => {
+      res.status(503).json({
+        error: 'Setup not complete',
+        message: 'Please complete the initial setup at /api/setup/complete',
+      });
+    });
+    return;
+  }
+
+  // Mount admin routes (auth + admin endpoints)
+  app.use('/api/auth', adminRouter);
+  app.use('/api/admin', adminRouter);
+
   // Mount explorer API routes
   app.use('/api', explorerRouter);
-
-  // Additional routes can be registered here based on setupComplete flag
-  // For example, only expose certain endpoints after DB migrations are complete
-  if (setupComplete) {
-    // Future routes will be added here
-  }
 }
