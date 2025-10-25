@@ -42,9 +42,13 @@ export function flushUsageLogs(): Map<UsageKey, number> {
 // ============================================================================
 
 const ChainIdParamSchema = z.object({
-  chainId: z.string().regex(/^\d+$/).transform(Number).refine(n => n > 0, {
-    message: 'chainId must be a positive integer',
-  }),
+  chainId: z
+    .string()
+    .regex(/^\d+$/)
+    .transform(Number)
+    .refine((n) => n > 0, {
+      message: 'chainId must be a positive integer',
+    }),
 });
 
 const AddressParamSchema = z.object({
@@ -60,12 +64,22 @@ const TxHashParamSchema = z.object({
 });
 
 const TransfersQuerySchema = z.object({
-  page: z.string().optional().default('1').transform(Number).refine(n => n > 0, {
-    message: 'page must be a positive integer',
-  }),
-  offset: z.string().optional().default('25').transform(Number).refine(n => n > 0 && n <= 100, {
-    message: 'offset must be between 1 and 100',
-  }),
+  page: z
+    .string()
+    .optional()
+    .default('1')
+    .transform(Number)
+    .refine((n) => n > 0, {
+      message: 'page must be a positive integer',
+    }),
+  offset: z
+    .string()
+    .optional()
+    .default('25')
+    .transform(Number)
+    .refine((n) => n > 0 && n <= 100, {
+      message: 'offset must be between 1 and 100',
+    }),
   sort: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
@@ -79,7 +93,10 @@ const TransfersQuerySchema = z.object({
  */
 function handleRouteError(res: Response, error: unknown): void {
   // Check if error is an EtherscanError by looking for its unique properties
-  if (error instanceof EtherscanError || (error && typeof error === 'object' && 'endpoint' in error)) {
+  if (
+    error instanceof EtherscanError ||
+    (error && typeof error === 'object' && 'endpoint' in error)
+  ) {
     res.status(502).json({
       error: (error as EtherscanError).message,
       endpoint: (error as EtherscanError).endpoint,
@@ -123,55 +140,52 @@ explorerRouter.get('/chains', (_req: Request, res: Response) => {
  * GET /api/address/:chainId/:address/transfers
  * Returns token transfers for an address on a specific chain
  */
-explorerRouter.get(
-  '/address/:chainId/:address/transfers',
-  async (req: Request, res: Response) => {
-    try {
-      // Validate params
-      const paramsResult = ChainIdParamSchema.merge(AddressParamSchema).safeParse(req.params);
-      if (!paramsResult.success) {
-        return res.status(400).json({
-          error: 'Invalid parameters',
-          details: paramsResult.error.format(),
-        });
-      }
-
-      // Validate query
-      const queryResult = TransfersQuerySchema.safeParse(req.query);
-      if (!queryResult.success) {
-        return res.status(400).json({
-          error: 'Invalid query parameters',
-          details: queryResult.error.format(),
-        });
-      }
-
-      const { chainId, address } = paramsResult.data;
-      const { page, offset, sort } = queryResult.data;
-
-      recordUsage('address/transfers', chainId);
-
-      // Call Etherscan client
-      const data = await getTokenTransfers({
-        chainId,
-        address,
-        page,
-        offset,
-        sort,
+explorerRouter.get('/address/:chainId/:address/transfers', async (req: Request, res: Response) => {
+  try {
+    // Validate params
+    const paramsResult = ChainIdParamSchema.merge(AddressParamSchema).safeParse(req.params);
+    if (!paramsResult.success) {
+      return res.status(400).json({
+        error: 'Invalid parameters',
+        details: paramsResult.error.format(),
       });
-
-      res.json({
-        chainId,
-        address,
-        page,
-        offset,
-        sort,
-        data,
-      });
-    } catch (error) {
-      handleRouteError(res, error);
     }
+
+    // Validate query
+    const queryResult = TransfersQuerySchema.safeParse(req.query);
+    if (!queryResult.success) {
+      return res.status(400).json({
+        error: 'Invalid query parameters',
+        details: queryResult.error.format(),
+      });
+    }
+
+    const { chainId, address } = paramsResult.data;
+    const { page, offset, sort } = queryResult.data;
+
+    recordUsage('address/transfers', chainId);
+
+    // Call Etherscan client
+    const data = await getTokenTransfers({
+      chainId,
+      address,
+      page,
+      offset,
+      sort,
+    });
+
+    res.json({
+      chainId,
+      address,
+      page,
+      offset,
+      sort,
+      data,
+    });
+  } catch (error) {
+    handleRouteError(res, error);
   }
-);
+});
 
 /**
  * GET /api/token/:chainId/:address/info

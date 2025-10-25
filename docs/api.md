@@ -17,6 +17,7 @@ Returns a curated list of supported EVM chains.
 **Parameters:** None
 
 **Response:**
+
 ```json
 [
   { "id": 1, "name": "Ethereum" },
@@ -33,9 +34,11 @@ Returns a curated list of supported EVM chains.
 ```
 
 **Status Codes:**
+
 - `200 OK` - Success
 
 **Notes:**
+
 - Chain IDs are from widely used registries like [Chainlist](https://chainlist.org)
 - These chains are supported by Etherscan V2 API with multi-chain support via the `chainid` parameter
 
@@ -46,20 +49,24 @@ Returns a curated list of supported EVM chains.
 Returns ERC-20 token transfer events for a specific address on a given chain.
 
 **Path Parameters:**
+
 - `chainId` (integer) - The blockchain chain ID (must be a positive integer)
 - `address` (string) - Ethereum address (must be `0x` followed by 40 hexadecimal characters)
 
 **Query Parameters:**
+
 - `page` (integer, optional) - Page number for pagination (default: 1)
 - `offset` (integer, optional) - Number of results per page, between 1-100 (default: 25)
 - `sort` (string, optional) - Sort order: `asc` or `desc` (default: `desc`)
 
 **Example Request:**
+
 ```
 GET /api/address/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/transfers?page=1&offset=10&sort=desc
 ```
 
 **Response:**
+
 ```json
 {
   "chainId": 1,
@@ -85,11 +92,13 @@ GET /api/address/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/transfers?page=1&o
 ```
 
 **Status Codes:**
+
 - `200 OK` - Success
 - `400 Bad Request` - Invalid parameters (invalid chainId, address format, or query parameters)
 - `502 Bad Gateway` - Upstream Etherscan API error
 
 **Upstream Mapping:**
+
 - Maps to Etherscan V2 endpoint: `module=account&action=tokentx`
 - [Documentation](https://docs.etherscan.io/api-endpoints/accounts#get-a-list-of-erc20-token-transfer-events-by-address)
 
@@ -100,15 +109,18 @@ GET /api/address/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/transfers?page=1&o
 Returns token information for a specific contract address.
 
 **Path Parameters:**
+
 - `chainId` (integer) - The blockchain chain ID (must be a positive integer)
 - `address` (string) - Token contract address (must be `0x` followed by 40 hexadecimal characters)
 
 **Example Request:**
+
 ```
 GET /api/token/1/0xdAC17F958D2ee523a2206206994597C13D831ec7/info
 ```
 
 **Response:**
+
 ```json
 {
   "contractAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -120,6 +132,7 @@ GET /api/token/1/0xdAC17F958D2ee523a2206206994597C13D831ec7/info
 ```
 
 **Response Fields:**
+
 - `contractAddress` (string) - The token contract address
 - `totalSupplyRaw` (string, optional) - Total supply in base units
 - `name` (string, optional) - Token name
@@ -127,15 +140,18 @@ GET /api/token/1/0xdAC17F958D2ee523a2206206994597C13D831ec7/info
 - `decimals` (number, optional) - Number of decimal places
 
 **Status Codes:**
+
 - `200 OK` - Success
 - `400 Bad Request` - Invalid parameters (invalid chainId or address format)
 - `502 Bad Gateway` - Upstream Etherscan API error
 
 **Upstream Mapping:**
+
 - Maps to Etherscan V2 endpoint: `module=stats&action=tokensupply`
 - [Documentation](https://docs.etherscan.io/api-endpoints/tokens#get-erc20-token-totalsupply-by-contractaddress)
 
 **Notes:**
+
 - Token metadata (name, symbol, decimals) may not be available for all tokens from the current endpoints
 - Additional metadata will be enhanced in future iterations
 
@@ -146,15 +162,18 @@ GET /api/token/1/0xdAC17F958D2ee523a2206206994597C13D831ec7/info
 Returns detailed transaction information for a specific transaction hash.
 
 **Path Parameters:**
+
 - `chainId` (integer) - The blockchain chain ID (must be a positive integer)
 - `hash` (string) - Transaction hash (must be `0x` followed by 64 hexadecimal characters)
 
 **Example Request:**
+
 ```
 GET /api/tx/1/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
 ```
 
 **Response:**
+
 ```json
 {
   "hash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
@@ -173,6 +192,7 @@ GET /api/tx/1/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
 ```
 
 **Response Fields:**
+
 - `hash` (string) - Transaction hash
 - `blockNumber` (number | null) - Block number (null if pending)
 - `from` (string) - Sender address
@@ -186,12 +206,14 @@ GET /api/tx/1/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
   - `logs` (array, optional) - Event logs
 
 **Status Codes:**
+
 - `200 OK` - Success
 - `400 Bad Request` - Invalid parameters (invalid chainId or hash format)
 - `502 Bad Gateway` - Upstream Etherscan API error
 
 **Upstream Mapping:**
 This endpoint aggregates data from three Etherscan V2 endpoints:
+
 1. `module=proxy&action=eth_getTransactionByHash` - Basic transaction data
    - [Documentation](https://docs.etherscan.io/api-endpoints/geth-parity-proxy#eth_gettransactionbyhash)
 2. `module=proxy&action=eth_getTransactionReceipt` - Receipt with gas usage and logs
@@ -210,6 +232,7 @@ The following endpoints are planned for future releases:
 Returns top token holders for a specific token contract.
 
 **Upstream Mapping:**
+
 - Will use `module=token&action=topholders`
 - [Documentation](https://docs.etherscan.io/api-endpoints/tokens#get-token-holder-list-by-contract-address)
 
@@ -222,6 +245,7 @@ Returns top token holders for a specific token contract.
 Returned when request parameters fail validation.
 
 **Example:**
+
 ```json
 {
   "error": "Invalid parameters",
@@ -238,6 +262,7 @@ Returned when request parameters fail validation.
 Returned when upstream Etherscan API fails.
 
 **Example:**
+
 ```json
 {
   "error": "API rate limit exceeded",
@@ -250,6 +275,7 @@ Returned when upstream Etherscan API fails.
 Returned for unexpected server errors.
 
 **Example:**
+
 ```json
 {
   "error": "Internal server error"
@@ -263,6 +289,7 @@ Returned for unexpected server errors.
 ### Multi-Chain Support
 
 The API leverages Etherscan V2's multi-chain support using a single API key:
+
 - Base URL: `https://api.etherscan.io/v2/api`
 - Chain selection via `chainid` query parameter
 - [Etherscan V2 Documentation](https://docs.etherscan.io)
@@ -270,6 +297,7 @@ The API leverages Etherscan V2's multi-chain support using a single API key:
 ### Validation
 
 All endpoints use [Zod](https://github.com/colinhacks/zod) for input validation:
+
 - Chain IDs must be positive integers
 - Addresses must be exactly `0x` + 40 hexadecimal characters (case-insensitive)
 - Transaction hashes must be exactly `0x` + 64 hexadecimal characters (case-insensitive)
@@ -278,6 +306,7 @@ All endpoints use [Zod](https://github.com/colinhacks/zod) for input validation:
 ### Rate Limiting
 
 The API proxies requests to Etherscan's API. Be aware of their rate limits:
+
 - Free tier: 5 requests/second
 - Consider implementing client-side caching for frequently accessed data
 - Future versions will include server-side caching and rate limit handling
@@ -285,6 +314,7 @@ The API proxies requests to Etherscan's API. Be aware of their rate limits:
 ### Usage Analytics
 
 The API includes minimal in-memory usage logging that tracks:
+
 - Date (YYYY-MM-DD)
 - Endpoint accessed
 - Chain ID

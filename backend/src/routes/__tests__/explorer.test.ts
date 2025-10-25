@@ -202,9 +202,7 @@ describe('Explorer API Routes', () => {
     });
 
     it('should return 400 for invalid address', async () => {
-      const response = await request(app)
-        .get('/api/token/1/0xinvalidaddress/info')
-        .expect(400);
+      const response = await request(app).get('/api/token/1/0xinvalidaddress/info').expect(400);
 
       expect(response.body).toHaveProperty('error');
     });
@@ -269,9 +267,7 @@ describe('Explorer API Routes', () => {
     });
 
     it('should return 400 for invalid hash', async () => {
-      const response = await request(app)
-        .get('/api/tx/1/0xinvalidhash')
-        .expect(400);
+      const response = await request(app).get('/api/tx/1/0xinvalidhash').expect(400);
 
       expect(response.body).toHaveProperty('error');
     });
@@ -285,9 +281,7 @@ describe('Explorer API Routes', () => {
     });
 
     it('should return 400 for hash with incorrect length', async () => {
-      const response = await request(app)
-        .get('/api/tx/1/0x1234')
-        .expect(400);
+      const response = await request(app).get('/api/tx/1/0x1234').expect(400);
 
       expect(response.body).toHaveProperty('error');
     });
