@@ -57,7 +57,7 @@ export function rateLimit(req: Request, res: Response, next: NextFunction): void
     next();
   } else {
     // Rate limit exceeded
-    const retryAfter = Math.ceil((1 - bucket.tokens) / REFILL_RATE);
+    const retryAfter = Math.ceil(Math.max(1, (1 - bucket.tokens) / REFILL_RATE));
     res.setHeader('Retry-After', retryAfter.toString());
     res.status(429).json({
       error: 'Too many requests',

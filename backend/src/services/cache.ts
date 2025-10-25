@@ -1,6 +1,7 @@
 import NodeCache from 'node-cache';
 import * as redis from './redis';
 import { env } from '@/config/env';
+import { logger } from '@/lib/logger';
 
 // In-memory cache fallback
 const nodeCache = new NodeCache({ stdTTL: env.CACHE_DEFAULT_TTL });
@@ -14,9 +15,9 @@ let redisAvailable = false;
 export async function initCache(): Promise<void> {
   redisAvailable = await redis.connect();
   if (redisAvailable) {
-    console.log('✓ Cache: Using Redis');
+    logger.info('Cache: Using Redis');
   } else {
-    console.log('✓ Cache: Using in-memory fallback (node-cache)');
+    logger.info('Cache: Using in-memory fallback (node-cache)');
   }
 }
 
