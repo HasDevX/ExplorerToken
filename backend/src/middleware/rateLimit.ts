@@ -12,8 +12,8 @@ const buckets = new Map<string, TokenBucket>();
 
 // Configuration
 const MAX_TOKENS = env.RATE_LIMIT_PER_MIN;
-const REFILL_RATE = MAX_TOKENS / 60; // tokens per second
 const WINDOW_MS = 60 * 1000; // 1 minute in milliseconds
+const REFILL_RATE = MAX_TOKENS / (WINDOW_MS / 1000); // tokens per second
 
 /**
  * Refill tokens for a bucket based on time elapsed
