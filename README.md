@@ -143,6 +143,31 @@ npm run migrate
 npm run dev
 ```
 
+### Frontend Quick Start
+
+To run the frontend in development mode:
+
+```bash
+cd frontend
+cp .env.sample .env
+npm i
+npm run dev
+# Frontend will be available at http://localhost:5173
+# The Vite proxy forwards /api → http://localhost:4000
+```
+
+**Note:** The backend should be running on port 4000 before starting the frontend.
+
+To start the backend:
+
+```bash
+cd backend
+npm i
+cp .env.sample .env
+# Put your Etherscan API key in backend/.env (ETHERSCAN_API_KEY)
+npm run dev
+```
+
 ### Workspace Structure
 
 ```
@@ -169,7 +194,7 @@ Both backend and frontend have `.env.sample` files. Copy these to `.env` and con
 
 **Frontend** (see `frontend/.env.sample`):
 
-- Configuration specific to frontend build and runtime
+- `VITE_API_URL`: API base URL (defaults to `/api` which proxies to backend in dev mode)
 
 ## Deployment
 

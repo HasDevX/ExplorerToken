@@ -4,9 +4,9 @@
   "description": "Frontend UI for ExplorerToken",
   "type": "module",
   "scripts": {
-    "dev": "echo \"Frontend dev script placeholder\"",
-    "build": "echo \"Frontend build placeholder\"",
-    "start": "echo \"Frontend start placeholder\"",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "test": "echo \"Frontend tests placeholder\"",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix"
@@ -19,11 +19,26 @@
   ],
   "author": "HasDevX",
   "license": "MIT",
-  "dependencies": {},
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.16",
     "@types/node": "^20.11.16",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
-    "typescript": "^5.3.3"
+    "@vitejs/plugin-react": "^5.1.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5.3.3",
+    "vite": "^7.1.12"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.5",
+    "axios": "^1.12.2",
+    "chart.js": "^4.5.1",
+    "react": "^19.2.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4",
+    "zod": "^4.1.12"
   }
 }
