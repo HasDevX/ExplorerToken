@@ -19,6 +19,7 @@ jest.mock('@/services/etherscanClient', () => {
     getTokenTransfers: jest.fn(),
     getTokenInfo: jest.fn(),
     getTxDetails: jest.fn(),
+    getTokenHolders: jest.fn(),
   };
 });
 
@@ -304,6 +305,145 @@ describe('Explorer API Routes', () => {
 
       expect(response.body).toEqual({
         error: 'Transaction not found',
+        endpoint: 'https://api.etherscan.io/v2/api',
+      });
+    });
+  });
+
+  describe('GET /api/token/:chainId/:address/holders', () => {
+    it('should return token holders with pagination', async () => {
+      const mockHolders = [
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          balanceRaw: '1000000000000000000000',
+          percent: 10.5,
+        },
+        {
+          address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+          balanceRaw: '500000000000000000000',
+          percent: 5.25,
+        },
+      ];
+
+      (etherscanClient.getTokenHolders as jest.Mock).mockResolvedValue(mockHolders);
+
+      const response = await request(app)
+        .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .query({ page: '1', offset: '25' })
+        .expect(200);
+
+      expect(response.body).toEqual({
+        chainId: 1,
+        address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0',
+        page: 1,
+        offset: 25,
+        data: mockHolders,
+      });
+
+      expect(etherscanClient.getTokenHolders).toHaveBeenCalledWith({
+        chainId: 1,
+        contractAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0',
+        page: 1,
+        offset: 25,
+      });
+    });
+
+    it('should use default page and offset values', async () => {
+      const mockHolders = [
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          balanceRaw: '1000000000000000000000',
+        },
+      ];
+
+      (etherscanClient.getTokenHolders as jest.Mock).mockResolvedValue(mockHolders);
+
+      const response = await request(app)
+        .get('/api/token/137/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .expect(200);
+
+      expect(response.body.page).toBe(1);
+      expect(response.body.offset).toBe(25);
+
+      expect(etherscanClient.getTokenHolders).toHaveBeenCalledWith({
+        chainId: 137,
+        contractAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0',
+        page: 1,
+        offset: 25,
+      });
+    });
+
+    it('should cache holders response for 180 seconds', async () => {
+      const mockHolders = [
+        {
+          address: '0x1234567890123456789012345678901234567890',
+          balanceRaw: '1000000000000000000000',
+        },
+      ];
+
+      (etherscanClient.getTokenHolders as jest.Mock).mockResolvedValue(mockHolders);
+
+      // First request
+      await request(app)
+        .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .expect(200);
+
+      // Second request should use cache
+      await request(app)
+        .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .expect(200);
+
+      // Should only call the client once due to caching
+      expect(etherscanClient.getTokenHolders).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return 400 for invalid chainId', async () => {
+      const response = await request(app)
+        .get('/api/token/invalid/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .expect(400);
+
+      expect(response.body.error).toBe('Invalid parameters');
+    });
+
+    it('should return 400 for invalid address format', async () => {
+      const response = await request(app).get('/api/token/1/invalid-address/holders').expect(400);
+
+      expect(response.body.error).toBe('Invalid parameters');
+    });
+
+    it('should return 400 for invalid page parameter', async () => {
+      const response = await request(app)
+        .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .query({ page: '0' })
+        .expect(400);
+
+      expect(response.body.error).toBe('Invalid query parameters');
+    });
+
+    it('should return 400 for offset exceeding max value', async () => {
+      const response = await request(app)
+        .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .query({ offset: '101' })
+        .expect(400);
+
+      expect(response.body.error).toBe('Invalid query parameters');
+    });
+
+    it('should return 502 when etherscan client throws an error', async () => {
+      (etherscanClient.getTokenHolders as jest.Mock).mockRejectedValue(
+        new etherscanClient.EtherscanError(
+          'API rate limit exceeded',
+          'https://api.etherscan.io/v2/api',
+          1
+        )
+      );
+
+      const response = await request(app)
+        .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
+        .expect(502);
+
+      expect(response.body).toEqual({
+        error: 'API rate limit exceeded',
         endpoint: 'https://api.etherscan.io/v2/api',
       });
     });
