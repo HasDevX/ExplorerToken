@@ -10,7 +10,8 @@ function isHttpError(error: unknown): error is { response?: { status?: number } 
     typeof error === 'object' &&
     error !== null &&
     'response' in error &&
-    typeof (error as { response?: unknown }).response === 'object'
+    typeof (error as { response?: unknown }).response === 'object' &&
+    (error as { response?: unknown }).response !== null
   );
 }
 
