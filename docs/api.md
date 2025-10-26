@@ -16,22 +16,32 @@ Returns a curated list of supported EVM chains.
 
 **Parameters:** None
 
-**Response:**
+**Response (Canonical Format):**
 
 ```json
-[
-  { "id": 1, "name": "Ethereum" },
-  { "id": 10, "name": "Optimism" },
-  { "id": 56, "name": "BNB Smart Chain" },
-  { "id": 100, "name": "Gnosis" },
-  { "id": 137, "name": "Polygon" },
-  { "id": 250, "name": "Fantom" },
-  { "id": 43114, "name": "Avalanche C-Chain" },
-  { "id": 42161, "name": "Arbitrum One" },
-  { "id": 8453, "name": "Base" },
-  { "id": 59144, "name": "Linea" }
-]
+{
+  "chains": [
+    { "id": 1, "key": "eth", "name": "Ethereum", "explorerBaseUrl": "https://etherscan.io", "supported": true },
+    { "id": 10, "key": "op", "name": "Optimism", "explorerBaseUrl": "https://optimistic.etherscan.io", "supported": true },
+    { "id": 56, "key": "bsc", "name": "BNB Smart Chain", "explorerBaseUrl": "https://bscscan.com", "supported": true },
+    { "id": 137, "key": "polygon", "name": "Polygon", "explorerBaseUrl": "https://polygonscan.com", "supported": true },
+    { "id": 324, "key": "zksync", "name": "zkSync", "explorerBaseUrl": "https://explorer.zksync.io", "supported": true },
+    { "id": 5000, "key": "mantle", "name": "Mantle", "explorerBaseUrl": "https://mantlescan.xyz", "supported": true },
+    { "id": 8453, "key": "base", "name": "Base", "explorerBaseUrl": "https://basescan.org", "supported": true },
+    { "id": 42161, "key": "arb1", "name": "Arbitrum One", "explorerBaseUrl": "https://arbiscan.io", "supported": true },
+    { "id": 43114, "key": "avax", "name": "Avalanche C-Chain", "explorerBaseUrl": "https://subnets.avax.network/c-chain", "supported": true }
+  ]
+}
 ```
+
+**Response Fields:**
+
+Each chain object contains:
+- `id` (number) - The chain ID
+- `key` (string) - Short key identifier for the chain
+- `name` (string) - User-facing chain name
+- `explorerBaseUrl` (string) - Base URL for the blockchain explorer
+- `supported` (boolean) - Whether this chain is supported by the Etherscan V2 API
 
 **Status Codes:**
 
@@ -39,8 +49,10 @@ Returns a curated list of supported EVM chains.
 
 **Notes:**
 
+- The API returns exactly **9 supported chains**: Ethereum (1), Optimism (10), BNB Smart Chain (56), Polygon (137), zkSync (324), Mantle (5000), Base (8453), Arbitrum One (42161), and Avalanche C-Chain (43114)
 - Chain IDs are from widely used registries like [Chainlist](https://chainlist.org)
 - These chains are supported by Etherscan V2 API with multi-chain support via the `chainid` parameter
+- **Backward Compatibility**: The frontend is tolerant of legacy array responses (without the `chains` wrapper) for smoother transitions
 
 ---
 

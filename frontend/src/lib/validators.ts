@@ -4,13 +4,23 @@ import { z } from 'zod';
 // Response Schemas
 // ============================================================================
 
-export const ChainSchema = z.object({
+// ChainMeta schema for chain metadata
+export const ChainMetaSchema = z.object({
   id: z.number(),
   key: z.string(),
   name: z.string(),
   explorerBaseUrl: z.string(),
   supported: z.boolean(),
 });
+
+// Legacy alias for backward compatibility
+export const ChainSchema = ChainMetaSchema;
+
+// ChainsResponse schema - accepts EITHER array OR {chains: array}
+export const ChainsResponseSchema = z.union([
+  z.array(ChainMetaSchema),
+  z.object({ chains: z.array(ChainMetaSchema) }),
+]);
 
 export const TransferSchema = z.object({
   blockNumber: z.string(),
@@ -100,7 +110,9 @@ export const HoldersResponseSchema = z.object({
 // Type Exports
 // ============================================================================
 
-export type Chain = z.infer<typeof ChainSchema>;
+export type ChainMeta = z.infer<typeof ChainMetaSchema>;
+export type Chain = ChainMeta; // Alias for backward compatibility
+export type ChainsResponse = z.infer<typeof ChainsResponseSchema>;
 export type Transfer = z.infer<typeof TransferSchema>;
 export type TransfersResponse = z.infer<typeof TransfersResponseSchema>;
 export type TokenInfo = z.infer<typeof TokenInfoSchema>;

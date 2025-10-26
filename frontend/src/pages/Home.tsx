@@ -22,8 +22,19 @@ export function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-red-600">Error loading chains: {(error as Error).message}</div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">ExplorerToken</h1>
+            <p className="text-lg text-gray-600">Multi-chain Token Explorer</p>
+          </div>
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
+              <p className="font-medium">Couldn't load chains. Please refresh.</p>
+              <p className="text-sm mt-1">If this persists, contact admin.</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

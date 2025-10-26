@@ -7,6 +7,7 @@ process.env.RATE_LIMIT_PER_MIN = '1000'; // High limit to avoid rate limiting in
 import express, { Express } from 'express';
 import request from 'supertest';
 import { explorerRouter } from '../explorer';
+import { ChainMeta } from '@/config/chains';
 import * as etherscanClient from '@/services/etherscanClient';
 import * as cache from '@/services/cache';
 
@@ -56,6 +57,24 @@ describe('Explorer API Routes', () => {
           expect.objectContaining({ id: 5000, name: 'Mantle', supported: true }),
         ])
       );
+    });
+
+    it('should return chains with all required fields', async () => {
+      const response = await request(app).get('/api/chains').expect(200);
+
+      expect(response.body.chains).toBeDefined();
+      response.body.chains.forEach((chain: ChainMeta) => {
+        expect(chain).toHaveProperty('id');
+        expect(chain).toHaveProperty('key');
+        expect(chain).toHaveProperty('name');
+        expect(chain).toHaveProperty('explorerBaseUrl');
+        expect(chain).toHaveProperty('supported');
+        expect(typeof chain.id).toBe('number');
+        expect(typeof chain.key).toBe('string');
+        expect(typeof chain.name).toBe('string');
+        expect(typeof chain.explorerBaseUrl).toBe('string');
+        expect(chain.supported).toBe(true);
+      });
     });
   });
 
