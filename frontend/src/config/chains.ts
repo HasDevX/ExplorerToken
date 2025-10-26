@@ -91,9 +91,7 @@ export const KNOWN_CHAINS: ChainMeta[] = [
 /**
  * Default selected chains for setup wizard (9 APIV2-supported chains)
  */
-export const DEFAULT_SELECTED_CHAIN_IDS: number[] = [
-  1, 10, 56, 137, 42161, 43114, 8453, 324, 5000,
-];
+export const DEFAULT_SELECTED_CHAIN_IDS: number[] = [1, 10, 56, 137, 42161, 43114, 8453, 324, 5000];
 
 /**
  * Get chain metadata by chain ID

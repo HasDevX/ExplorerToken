@@ -89,47 +89,43 @@ adminRouter.get('/settings', requireAuth, async (req: Request, res: Response) =>
  * PUT /api/admin/settings
  * Update application settings
  */
-adminRouter.put(
-  '/settings',
-  requireAuth,
-  async (req: Request, res: Response) => {
-    try {
-      const UpdateSchema = z.object({
-        chains: z.array(z.number().positive()).optional(),
-        cacheTtl: z.number().min(10).optional(),
+adminRouter.put('/settings', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const UpdateSchema = z.object({
+      chains: z.array(z.number().positive()).optional(),
+      cacheTtl: z.number().min(10).optional(),
+    });
+
+    const validation = UpdateSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        error: 'Invalid settings data',
+        details: validation.error.format(),
       });
-
-      const validation = UpdateSchema.safeParse(req.body);
-      if (!validation.success) {
-        res.status(400).json({
-          error: 'Invalid settings data',
-          details: validation.error.format(),
-        });
-        return;
-      }
-
-      const updates = {
-        chains: validation.data.chains,
-        cache_ttl: validation.data.cacheTtl,
-      };
-
-      const settings = await updateSettings(updates);
-
-      res.json({
-        success: true,
-        settings: {
-          chains: settings.chains,
-          cacheTtl: settings.cache_ttl,
-        },
-      });
-    } catch (error) {
-      res.status(500).json({
-        error: 'Failed to update settings',
-        details: error instanceof Error ? error.message : String(error),
-      });
+      return;
     }
+
+    const updates = {
+      chains: validation.data.chains,
+      cache_ttl: validation.data.cacheTtl,
+    };
+
+    const settings = await updateSettings(updates);
+
+    res.json({
+      success: true,
+      settings: {
+        chains: settings.chains,
+        cacheTtl: settings.cache_ttl,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to update settings',
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
-);
+});
 
 // ============================================================================
 // API Key Management
@@ -178,25 +174,21 @@ adminRouter.put('/api-key', requireAuth, async (req: Request, res: Response) => 
  * POST /api/admin/cache/clear
  * Clear the application cache
  */
-adminRouter.post(
-  '/cache/clear',
-  requireAuth,
-  async (_req: Request, res: Response) => {
-    try {
-      await cache.flushAll();
+adminRouter.post('/cache/clear', requireAuth, async (_req: Request, res: Response) => {
+  try {
+    await cache.flushAll();
 
-      res.json({
-        success: true,
-        message: 'Cache cleared successfully',
-      });
-    } catch (error) {
-      res.status(500).json({
-        error: 'Failed to clear cache',
-        details: error instanceof Error ? error.message : String(error),
-      });
-    }
+    res.json({
+      success: true,
+      message: 'Cache cleared successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to clear cache',
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
-);
+});
 
 // ============================================================================
 // Metrics
