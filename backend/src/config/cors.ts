@@ -1,19 +1,31 @@
-import cors, { CorsOptions } from 'cors';
-import { env } from '@/config/env';
+import cors, { CorsOptions, CorsOptionsDelegate, CorsRequest } from 'cors';
 
-const allowlist = (env.CORS_ALLOW_ORIGINS ?? []).filter(Boolean);
+// Example: allowlist from env CSV (e.g., "https://haswork.dev,https://www.haswork.dev")
+const ALLOWLIST = (process.env.FRONTEND_URL ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-const makeStrictOptions = (): CorsOptions => ({
-  origin(origin, cb) {
-    if (!origin) return cb(new Error('Origin required'), false);
-    cb(null, allowlist.includes(origin));
-  },
-  credentials: false,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Authorization', 'Content-Type'],
-});
+const allowSet = new Set(ALLOWLIST);
 
-export const strictCors = cors(makeStrictOptions());
+// Delegate lets us decide per-request
+export const corsOptionsDelegate: CorsOptionsDelegate<CorsRequest> = (req, callback) => {
+  const originHeader = typeof req.headers?.origin === 'string' ? req.headers.origin : undefined;
 
-// For public explorer routes we rely on same-origin (dev uses Vite proxy),
-// so we DO NOT export a permissive wildcard CORS here to satisfy CodeQL.
+  // Accept requests with no Origin (curl/cron/server-to-server)
+  if (!originHeader) {
+    const opts: CorsOptions = { origin: true, credentials: true };
+    return callback(null, opts);
+  }
+
+  // Browser requests: allow only allow-listed origins
+  const allowed = allowSet.size === 0 || allowSet.has(originHeader);
+  const opts: CorsOptions = { origin: allowed ? originHeader : false, credentials: true };
+  return callback(null, opts);
+};
+
+// Strict CORS for admin/auth routes
+export const strictCors = cors(corsOptionsDelegate);
+
+// Public/open CORS for explorer routes (chains, token, tx, address) if needed
+export const publicCors = cors({ origin: true });
