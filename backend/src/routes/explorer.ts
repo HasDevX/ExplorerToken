@@ -122,6 +122,20 @@ function isSupportedChain(chainId: number): boolean {
 }
 
 /**
+ * Middleware to validate chain ID in route params
+ */
+function validateSupportedChain(chainId: number, res: Response): boolean {
+  if (!isSupportedChain(chainId)) {
+    res.status(400).json({
+      error: 'Unsupported chain',
+      message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
  * Handle errors from async route handlers
  * Returns appropriate HTTP status and error response
  */
@@ -186,12 +200,7 @@ explorerRouter.get('/address/:chainId/:address/transfers', async (req: Request, 
     const { page, offset, sort } = queryResult.data;
 
     // Validate chain is supported
-    if (!isSupportedChain(chainId)) {
-      return res.status(400).json({
-        error: 'Unsupported chain',
-        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
-      });
-    }
+    if (!validateSupportedChain(chainId, res)) return;
 
     recordUsage('address/transfers', chainId);
 
@@ -247,12 +256,7 @@ explorerRouter.get('/token/:chainId/:address/info', async (req: Request, res: Re
     const { chainId, address } = paramsResult.data;
 
     // Validate chain is supported
-    if (!isSupportedChain(chainId)) {
-      return res.status(400).json({
-        error: 'Unsupported chain',
-        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
-      });
-    }
+    if (!validateSupportedChain(chainId, res)) return;
 
     recordUsage('token/info', chainId);
 
@@ -296,12 +300,7 @@ explorerRouter.get('/tx/:chainId/:hash', async (req: Request, res: Response) => 
     const { chainId, hash } = paramsResult.data;
 
     // Validate chain is supported
-    if (!isSupportedChain(chainId)) {
-      return res.status(400).json({
-        error: 'Unsupported chain',
-        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
-      });
-    }
+    if (!validateSupportedChain(chainId, res)) return;
 
     recordUsage('tx', chainId);
 
@@ -355,12 +354,7 @@ explorerRouter.get('/token/:chainId/:address/holders', async (req: Request, res:
     const { page, offset } = queryResult.data;
 
     // Validate chain is supported
-    if (!isSupportedChain(chainId)) {
-      return res.status(400).json({
-        error: 'Unsupported chain',
-        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
-      });
-    }
+    if (!validateSupportedChain(chainId, res)) return;
 
     recordUsage('token/holders', chainId);
 
