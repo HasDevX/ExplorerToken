@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authenticateUser, generateToken } from '@/services/auth';
 import { requireAuth, AuthRequest } from '@/middleware/auth';
 import { loginLimiter, adminReadLimiter } from '@/middleware/rateLimiters';
+import { logger } from '@/lib/logger';
 
 export const authRouter = Router();
 
@@ -34,12 +35,15 @@ authRouter.post('/login', loginLimiter, async (req: Request, res: Response) => {
     const user = await authenticateUser(username, password);
 
     if (!user) {
+      logger.warn('Invalid credentials', { username });
       res.status(401).json({ error: 'Invalid username or password' });
       return;
     }
 
     // Generate token
     const token = generateToken(user);
+
+    logger.info('Login success', { username });
 
     res.json({
       success: true,

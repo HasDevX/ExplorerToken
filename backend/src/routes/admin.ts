@@ -6,7 +6,8 @@ import { updateSettings } from '@/services/settings';
 import * as cache from '@/services/cache';
 import { flushUsageLogs } from '@/routes/explorer';
 import { RequestWithId } from '@/middleware/requestId';
-import { getChainMeta, type ChainMeta } from '@/config/chains';
+import { getChainMeta, DEFAULT_CHAIN_IDS, type ChainMeta } from '@/config/chains';
+import { logger } from '@/lib/logger';
 
 export const adminRouter = Router();
 
@@ -47,6 +48,12 @@ adminRouter.get('/settings', adminReadLimiter, requireAuth, async (req: Request,
         .filter((id: number) => id > 0);
     }
 
+    // If no chains configured, default to our 10 primary chains
+    if (selectedChainIds.length === 0) {
+      selectedChainIds = DEFAULT_CHAIN_IDS;
+      logger.info('No chains configured, using defaults', { defaultChains: DEFAULT_CHAIN_IDS });
+    }
+
     // Build detailed chain metadata for selected chains
     const chainsDetailed: ChainMeta[] = selectedChainIds
       .map((id) => getChainMeta(id))
@@ -63,7 +70,10 @@ adminRouter.get('/settings', adminReadLimiter, requireAuth, async (req: Request,
   } catch (error) {
     // Log error but don't expose details
     const requestId = (req as RequestWithId).requestId;
-    console.error(`[${requestId}] Error fetching settings:`, error);
+    logger.error(
+      `Error fetching settings: ${error instanceof Error ? error.message : String(error)}`,
+      { requestId }
+    );
 
     res.status(500).json({
       error: 'Internal error',

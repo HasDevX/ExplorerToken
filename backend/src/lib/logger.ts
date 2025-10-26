@@ -8,21 +8,22 @@ const getTimestamp = (): string => {
   return new Date().toISOString();
 };
 
-const formatMessage = (level: LogLevel, message: string): string => {
-  return `[${getTimestamp()}] [${level.toUpperCase()}] ${message}`;
+const formatMessage = (level: LogLevel, message: string, metadata?: object): string => {
+  const metaStr = metadata ? ` ${JSON.stringify(metadata)}` : '';
+  return `[${getTimestamp()}] [${level.toUpperCase()}] ${message}${metaStr}`;
 };
 
 export const logger = {
-  info: (message: string): void => {
-    console.log(formatMessage('info', message));
+  info: (message: string, metadata?: object): void => {
+    console.log(formatMessage('info', message, metadata));
   },
-  warn: (message: string): void => {
-    console.warn(formatMessage('warn', message));
+  warn: (message: string, metadata?: object): void => {
+    console.warn(formatMessage('warn', message, metadata));
   },
-  error: (message: string): void => {
-    console.error(formatMessage('error', message));
+  error: (message: string, metadata?: object): void => {
+    console.error(formatMessage('error', message, metadata));
   },
-  debug: (message: string): void => {
-    console.debug(formatMessage('debug', message));
+  debug: (message: string, metadata?: object): void => {
+    console.debug(formatMessage('debug', message, metadata));
   },
 };

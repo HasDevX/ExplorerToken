@@ -43,4 +43,5 @@ app.use(errorHandler);
 app.listen(env.PORT, () => {
   logger.info(`Server is running on port ${env.PORT}`);
   logger.info(`Health check available at http://localhost:${env.PORT}/health`);
+  logger.info('CORS allowlist', { origins: env.CORS_ALLOW_ORIGINS });
 });

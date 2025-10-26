@@ -13,6 +13,10 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts, please try again later.' },
+  handler: (req, res) => {
+    res.set('Retry-After', String(Math.ceil(15 * 60))); // 15 minutes in seconds
+    res.status(429).json({ error: 'Too many login attempts, please try again later.' });
+  },
 });
 
 /** Admin reads (settings) */
