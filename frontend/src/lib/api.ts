@@ -47,7 +47,8 @@ apiClient.interceptors.request.use((config) => {
  */
 export async function getChains(): Promise<Chain[]> {
   const response = await apiClient.get('/chains');
-  return ChainSchema.array().parse(response.data);
+  // API now returns { chains: [...] }
+  return ChainSchema.array().parse(response.data.chains);
 }
 
 /**
