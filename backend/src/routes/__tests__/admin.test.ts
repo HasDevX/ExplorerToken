@@ -56,7 +56,7 @@ describe('Admin Routes', () => {
   describe('Authentication', () => {
     it('should reject requests without token', async () => {
       const response = await request(app).get('/api/admin/settings').expect(401);
-      expect(response.body).toEqual({ error: 'Unauthorized' });
+      expect(response.body).toEqual({ error: 'unauthorized' });
     });
 
     it('should reject requests with invalid token', async () => {
@@ -69,7 +69,26 @@ describe('Admin Routes', () => {
         .set('Authorization', 'Bearer invalid')
         .expect(401);
 
-      expect(response.body).toEqual({ error: 'Unauthorized' });
+      expect(response.body).toEqual({ error: 'unauthorized' });
+    });
+
+    it('should reject HEAD requests without token with 401 (not 500)', async () => {
+      const response = await request(app).head('/api/admin/settings').expect(401);
+      // HEAD requests don't return a body, but we verify the status code
+      expect(response.status).toBe(401);
+    });
+
+    it('should reject HEAD requests with invalid token', async () => {
+      (auth.verifyToken as jest.Mock).mockImplementation(() => {
+        throw new Error('Invalid token');
+      });
+
+      const response = await request(app)
+        .head('/api/admin/settings')
+        .set('Authorization', 'Bearer invalid')
+        .expect(401);
+
+      expect(response.status).toBe(401);
     });
   });
 
