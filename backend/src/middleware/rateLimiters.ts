@@ -53,3 +53,17 @@ export const adminLimiter = rateLimit({
     res.status(429).json({ error: 'rate_limited' });
   },
 });
+
+/** General auth endpoint rate limiter: 30/min per IP for /me and similar endpoints */
+export const authLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: Number(process.env.AUTH_MAX ?? (isTest ? 100000 : 30)),
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: getRedisStore(),
+  handler: (_req, res) => {
+    res.status(429).json({ error: 'rate_limited' });
+  },
+});
