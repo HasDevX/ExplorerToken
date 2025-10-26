@@ -1,10 +1,11 @@
 import axios from 'axios';
 import {
-  ChainSchema,
+  ChainsResponseSchema,
   TransfersResponseSchema,
   TokenInfoSchema,
   TxDetailsSchema,
   HoldersResponseSchema,
+  type ChainMeta,
   type Chain,
   type TransfersResponse,
   type TokenInfo,
@@ -47,8 +48,11 @@ apiClient.interceptors.request.use((config) => {
  */
 export async function getChains(): Promise<Chain[]> {
   const response = await apiClient.get('/chains');
-  // API now returns { chains: [...] }
-  return ChainSchema.array().parse(response.data.chains);
+  // Parse with ChainsResponseSchema to accept both array and {chains: array}
+  const parsed = ChainsResponseSchema.parse(response.data);
+  // Normalize to array format
+  const chains = Array.isArray(parsed) ? parsed : parsed.chains;
+  return chains;
 }
 
 /**
@@ -185,14 +189,6 @@ export async function getCurrentUser(): Promise<{
 // ============================================================================
 // Admin API Functions
 // ============================================================================
-
-export interface ChainMeta {
-  id: number;
-  key: string;
-  name: string;
-  explorerBaseUrl: string;
-  supported: boolean;
-}
 
 export interface Settings {
   selectedChainIds: number[];
