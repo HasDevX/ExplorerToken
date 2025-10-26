@@ -10,6 +10,7 @@ import {
 } from '@/services/etherscanClient';
 import * as cache from '@/services/cache';
 import { rateLimit } from '@/middleware/rateLimit';
+import { SUPPORTED_CHAINS } from '@/config/chains';
 
 export const explorerRouter = Router();
 
@@ -147,20 +148,7 @@ function handleRouteError(res: Response, error: unknown): void {
 explorerRouter.get('/chains', (_req: Request, res: Response) => {
   recordUsage('chains');
 
-  const chains = [
-    { id: 1, name: 'Ethereum' },
-    { id: 10, name: 'Optimism' },
-    { id: 56, name: 'BNB Smart Chain' },
-    { id: 100, name: 'Gnosis' },
-    { id: 137, name: 'Polygon' },
-    { id: 250, name: 'Fantom' },
-    { id: 43114, name: 'Avalanche C-Chain' },
-    { id: 42161, name: 'Arbitrum One' },
-    { id: 8453, name: 'Base' },
-    { id: 59144, name: 'Linea' },
-  ];
-
-  res.json(chains);
+  res.json({ chains: SUPPORTED_CHAINS });
 });
 
 /**

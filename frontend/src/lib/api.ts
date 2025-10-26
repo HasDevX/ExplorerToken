@@ -24,6 +24,13 @@ const apiClient = axios.create({
 
 // Add JWT token to requests automatically
 apiClient.interceptors.request.use((config) => {
+  // Token migration: check for old jwt_token and migrate to token
+  const oldToken = localStorage.getItem('jwt_token');
+  if (oldToken && !localStorage.getItem('token')) {
+    localStorage.setItem('token', oldToken);
+    localStorage.removeItem('jwt_token');
+  }
+
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -178,11 +185,20 @@ export async function getCurrentUser(): Promise<{
 // Admin API Functions
 // ============================================================================
 
+export interface ChainMeta {
+  id: number;
+  key: string;
+  name: string;
+  explorerBaseUrl: string;
+  supported: boolean;
+}
+
 export interface Settings {
-  setupComplete: boolean;
+  selectedChainIds: number[];
   cacheTtl: number;
-  chains: number[];
-  hasApiKey: boolean;
+  apiKeySet: boolean;
+  apiKeyLastValidated: string | null;
+  chainsDetailed?: ChainMeta[];
 }
 
 /**

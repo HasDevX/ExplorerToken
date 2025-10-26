@@ -9,21 +9,9 @@ import {
   logout,
   type Settings,
 } from '../lib/api';
+import { KNOWN_CHAINS } from '../config/chains';
 
 type Tab = 'settings' | 'apikey' | 'cache' | 'metrics';
-
-const DEFAULT_CHAINS = [
-  { id: 1, name: 'Ethereum' },
-  { id: 10, name: 'Optimism' },
-  { id: 56, name: 'BNB Smart Chain' },
-  { id: 100, name: 'Gnosis' },
-  { id: 137, name: 'Polygon' },
-  { id: 250, name: 'Fantom' },
-  { id: 43114, name: 'Avalanche C-Chain' },
-  { id: 42161, name: 'Arbitrum One' },
-  { id: 8453, name: 'Base' },
-  { id: 59144, name: 'Linea' },
-];
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -63,13 +51,14 @@ export function Dashboard() {
     try {
       const data = await getAdminSettings();
       setSettings(data);
-      setSelectedChains(data.chains);
-      setCacheTtl(data.cacheTtl);
+      // Use selectedChainIds from new API response
+      setSelectedChains(data.selectedChainIds || []);
+      setCacheTtl(data.cacheTtl || 60);
     } catch (err) {
       // Handle different error scenarios
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as {
-          response?: { status?: number; data?: Record<string, unknown> };
+          response?: { status?: number; data?: { error?: string; requestId?: string } };
         };
 
         if (axiosError.response?.status === 401) {
@@ -89,8 +78,12 @@ export function Dashboard() {
         }
 
         if (axiosError.response?.status === 500) {
-          // Server error - show friendly error banner, do NOT redirect
-          setError('An internal server error occurred. Please try again later.');
+          // Server error - show friendly error banner with requestId if available
+          const requestId = axiosError.response.data?.requestId;
+          const errorMsg = requestId
+            ? `An internal server error occurred. Request ID: ${requestId}. Please try again later.`
+            : 'An internal server error occurred. Please try again later.';
+          setError(errorMsg);
           return;
         }
       }
@@ -264,7 +257,7 @@ export function Dashboard() {
                 <div>
                   <h2 className="text-lg font-semibold mb-4">Chain Configuration</h2>
                   <div className="grid grid-cols-2 gap-3">
-                    {DEFAULT_CHAINS.map((chain) => (
+                    {KNOWN_CHAINS.map((chain) => (
                       <label
                         key={chain.id}
                         className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
@@ -315,7 +308,7 @@ export function Dashboard() {
                 <div>
                   <h2 className="text-lg font-semibold mb-4">Update Etherscan API Key</h2>
                   <p className="text-gray-600 mb-4">
-                    Current API key is {settings?.hasApiKey ? 'configured' : 'not set'}
+                    Current API key is {settings?.apiKeySet ? 'configured' : 'not set'}
                   </p>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     New API Key
