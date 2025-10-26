@@ -32,6 +32,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ type: 'info' | 'error'; message: string } | null>(null);
 
   // Settings tab state
   const [selectedChains, setSelectedChains] = useState<number[]>([]);
@@ -50,6 +51,14 @@ export function Dashboard() {
     loadSettings();
   }, []);
 
+  // Auto-clear toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const loadSettings = async () => {
     try {
       const data = await getAdminSettings();
@@ -57,16 +66,37 @@ export function Dashboard() {
       setSelectedChains(data.chains);
       setCacheTtl(data.cacheTtl);
     } catch (err) {
-      setError('Failed to load settings. Please log in again.');
-      // If unauthorized, redirect to login
+      // Handle different error scenarios
       if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { status?: number } };
+        const axiosError = err as {
+          response?: { status?: number; data?: Record<string, unknown> };
+        };
+
         if (axiosError.response?.status === 401) {
-          localStorage.removeItem('jwt_token');
+          // Session expired - clear token and redirect to login
+          localStorage.removeItem('token');
           localStorage.removeItem('user');
-          navigate('/login');
+          setToast({ type: 'info', message: 'Session expired. Please log in again.' });
+          setTimeout(() => navigate('/login'), 1500);
+          return;
+        }
+
+        if (axiosError.response?.status === 409) {
+          // Setup not completed - redirect to setup
+          setToast({ type: 'info', message: 'Setup not completed. Redirecting to setup...' });
+          setTimeout(() => navigate('/setup'), 1500);
+          return;
+        }
+
+        if (axiosError.response?.status === 500) {
+          // Server error - show friendly error banner, do NOT redirect
+          setError('An internal server error occurred. Please try again later.');
+          return;
         }
       }
+
+      // Generic error
+      setError('Failed to load settings. Please try again.');
     }
   };
 
@@ -153,7 +183,7 @@ export function Dashboard() {
     } catch (err) {
       // Ignore errors
     }
-    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
   };
@@ -162,6 +192,19 @@ export function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow">
+          {/* Toast notification */}
+          {toast && (
+            <div
+              className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
+                toast.type === 'error'
+                  ? 'bg-red-50 border border-red-200 text-red-700'
+                  : 'bg-blue-50 border border-blue-200 text-blue-700'
+              }`}
+            >
+              {toast.message}
+            </div>
+          )}
+
           {/* Header */}
           <div className="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -272,7 +315,7 @@ export function Dashboard() {
                 <div>
                   <h2 className="text-lg font-semibold mb-4">Update Etherscan API Key</h2>
                   <p className="text-gray-600 mb-4">
-                    Current API key is {settings?.apiKeySet ? 'configured' : 'not set'}
+                    Current API key is {settings?.hasApiKey ? 'configured' : 'not set'}
                   </p>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     New API Key

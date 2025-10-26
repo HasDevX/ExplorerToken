@@ -24,7 +24,7 @@ const apiClient = axios.create({
 
 // Add JWT token to requests automatically
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('jwt_token');
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -179,10 +179,10 @@ export async function getCurrentUser(): Promise<{
 // ============================================================================
 
 export interface Settings {
-  chains: number[];
+  setupComplete: boolean;
   cacheTtl: number;
-  apiKeySet: boolean;
-  apiKeyLastValidated?: string;
+  chains: number[];
+  hasApiKey: boolean;
 }
 
 /**

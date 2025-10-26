@@ -16,7 +16,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Unauthorized - No token provided' });
+    res.status(401).json({ error: 'Unauthorized' });
     return;
   }
 
@@ -27,6 +27,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     (req as AuthRequest).user = payload;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Unauthorized - Invalid token' });
+    // Do not throw, just return 401
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
   }
 }

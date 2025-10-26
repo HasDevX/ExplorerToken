@@ -10,11 +10,14 @@ import { adminRouter } from '../admin';
 import * as settings from '@/services/settings';
 import * as cache from '@/services/cache';
 import * as auth from '@/services/auth';
+import * as db from '@/services/db';
+import { RequestWithId } from '@/middleware/requestId';
 
 // Mock services
 jest.mock('@/services/settings');
 jest.mock('@/services/cache');
 jest.mock('@/services/auth');
+jest.mock('@/services/db');
 jest.mock('../explorer', () => ({
   flushUsageLogs: jest.fn().mockReturnValue(new Map()),
 }));
@@ -22,10 +25,16 @@ jest.mock('../explorer', () => ({
 describe('Admin Routes', () => {
   let app: Express;
   const validToken = 'valid-jwt-token';
+  let mockDbQuery: jest.Mock;
 
   beforeEach(() => {
     app = express();
     app.use(express.json());
+    // Add request ID middleware for testing
+    app.use((req, _res, next) => {
+      (req as RequestWithId).requestId = 'test-request-id';
+      next();
+    });
     app.use('/api/admin', adminRouter);
     jest.clearAllMocks();
 
@@ -35,11 +44,18 @@ describe('Admin Routes', () => {
       username: 'admin',
       role: 'admin',
     });
+
+    // Mock DB query
+    mockDbQuery = jest.fn();
+    (db.getDb as jest.Mock).mockReturnValue({
+      query: mockDbQuery,
+    });
   });
 
   describe('Authentication', () => {
     it('should reject requests without token', async () => {
-      await request(app).get('/api/admin/settings').expect(401);
+      const response = await request(app).get('/api/admin/settings').expect(401);
+      expect(response.body).toEqual({ error: 'Unauthorized' });
     });
 
     it('should reject requests with invalid token', async () => {
@@ -47,18 +63,31 @@ describe('Admin Routes', () => {
         throw new Error('Invalid token');
       });
 
-      await request(app)
+      const response = await request(app)
         .get('/api/admin/settings')
         .set('Authorization', 'Bearer invalid')
         .expect(401);
+
+      expect(response.body).toEqual({ error: 'Unauthorized' });
     });
   });
 
   describe('GET /api/admin/settings', () => {
-    it('should return settings for authenticated user', async () => {
-      const mockSettings = {
+    it('should return 409 when settings not found', async () => {
+      mockDbQuery.mockResolvedValue({ rows: [] });
+
+      const response = await request(app)
+        .get('/api/admin/settings')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(409);
+
+      expect(response.body).toEqual({ error: 'Setup not completed' });
+    });
+
+    it('should return sanitized settings for authenticated user', async () => {
+      const mockRow = {
         id: 1,
-        etherscan_api_key: 'key',
+        etherscan_api_key: 'secret-key-should-not-be-exposed',
         chains: [1, 137],
         cache_ttl: 60,
         setup_complete: true,
@@ -67,7 +96,7 @@ describe('Admin Routes', () => {
         updated_at: new Date(),
       };
 
-      (settings.getSettings as jest.Mock).mockResolvedValue(mockSettings);
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
 
       const response = await request(app)
         .get('/api/admin/settings')
@@ -75,11 +104,56 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        chains: [1, 137],
+        setupComplete: true,
         cacheTtl: 60,
-        apiKeySet: true,
-        apiKeyLastValidated: null,
+        chains: [1, 137],
+        hasApiKey: true,
       });
+
+      // Verify the secret key is NOT in the response
+      expect(JSON.stringify(response.body)).not.toContain('secret-key');
+    });
+
+    it('should use defaults when fields are missing', async () => {
+      const mockRow = {
+        id: 1,
+        etherscan_api_key: null,
+        chains: null,
+        cache_ttl: null,
+        setup_complete: false,
+      };
+
+      mockDbQuery.mockResolvedValue({ rows: [mockRow] });
+
+      const response = await request(app)
+        .get('/api/admin/settings')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
+
+      expect(response.body).toEqual({
+        setupComplete: false,
+        cacheTtl: 60, // default
+        chains: [], // default
+        hasApiKey: false,
+      });
+    });
+
+    it('should return 500 with requestId on DB error', async () => {
+      mockDbQuery.mockRejectedValue(new Error('Database connection failed'));
+
+      const response = await request(app)
+        .get('/api/admin/settings')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(500);
+
+      expect(response.body).toEqual({
+        error: 'Internal error',
+        requestId: 'test-request-id',
+      });
+
+      // Verify no stack trace is exposed
+      expect(response.body).not.toHaveProperty('stack');
+      expect(response.body).not.toHaveProperty('details');
     });
   });
 

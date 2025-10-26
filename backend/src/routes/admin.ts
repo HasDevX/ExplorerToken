@@ -2,9 +2,10 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '@/middleware/auth';
 import { adminReadLimiter, adminWriteLimiter } from '@/middleware/rateLimiters';
-import { getSettings, updateSettings } from '@/services/settings';
+import { updateSettings } from '@/services/settings';
 import * as cache from '@/services/cache';
 import { flushUsageLogs } from '@/routes/explorer';
+import { RequestWithId } from '@/middleware/requestId';
 
 export const adminRouter = Router();
 
@@ -16,33 +17,39 @@ export const adminRouter = Router();
  * GET /api/admin/settings
  * Get current application settings
  */
-adminRouter.get(
-  '/settings',
-  adminReadLimiter,
-  requireAuth,
-  async (_req: Request, res: Response) => {
-    try {
-      const settings = await getSettings();
+adminRouter.get('/settings', adminReadLimiter, requireAuth, async (req: Request, res: Response) => {
+  try {
+    const db = await import('@/services/db').then((m) => m.getDb());
 
-      if (!settings) {
-        res.status(404).json({ error: 'Settings not found' });
-        return;
-      }
+    // Query the latest settings row (id desc limit 1)
+    const result = await db.query(`SELECT * FROM settings ORDER BY id DESC LIMIT 1`);
 
-      res.json({
-        chains: settings.chains,
-        cacheTtl: settings.cache_ttl,
-        apiKeySet: !!settings.etherscan_api_key,
-        apiKeyLastValidated: settings.api_key_last_validated_at,
-      });
-    } catch (error) {
-      res.status(500).json({
-        error: 'Failed to get settings',
-        details: error instanceof Error ? error.message : String(error),
-      });
+    // If no settings found, return 409
+    if (result.rows.length === 0) {
+      res.status(409).json({ error: 'Setup not completed' });
+      return;
     }
+
+    const row = result.rows[0];
+
+    // Sanitize and return safe data with defaults
+    res.json({
+      setupComplete: !!row.setup_complete,
+      cacheTtl: row.cache_ttl ?? 60,
+      chains: Array.isArray(row.chains) ? row.chains : [],
+      hasApiKey: Boolean(row.etherscan_api_key),
+    });
+  } catch (error) {
+    // Log error but don't expose details
+    const requestId = (req as RequestWithId).requestId;
+    console.error(`[${requestId}] Error fetching settings:`, error);
+
+    res.status(500).json({
+      error: 'Internal error',
+      requestId,
+    });
   }
-);
+});
 
 /**
  * PUT /api/admin/settings
