@@ -7,6 +7,7 @@ process.env.RATE_LIMIT_PER_MIN = '1000'; // High limit to avoid rate limiting in
 import express, { Express } from 'express';
 import request from 'supertest';
 import { explorerRouter } from '../explorer';
+import { ChainMeta } from '@/config/chains';
 import * as etherscanClient from '@/services/etherscanClient';
 import * as cache from '@/services/cache';
 
@@ -62,8 +63,7 @@ describe('Explorer API Routes', () => {
       const response = await request(app).get('/api/chains').expect(200);
 
       expect(response.body.chains).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      response.body.chains.forEach((chain: any) => {
+      response.body.chains.forEach((chain: ChainMeta) => {
         expect(chain).toHaveProperty('id');
         expect(chain).toHaveProperty('key');
         expect(chain).toHaveProperty('name');
