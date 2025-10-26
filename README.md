@@ -242,6 +242,37 @@ Deployment is handled via GitHub Actions to a VPS using Docker Compose. See the 
 - **Database**: PostgreSQL container with backup scripts
 - **Cache**: Redis container (optional)
 
+### Deploy from VS Code (Remote-SSH)
+
+When connected to the production server via VS Code Remote-SSH, you can use one-click deployment tasks:
+
+**Backend Deploy Task** (`Deploy: ExplorerToken backend`)
+- Builds the backend with `npm ci && npm run build`
+- Restarts the backend service
+- Runs database migrations if needed
+- **Success signals**: Service status shows "active (running)", backend API responds with 200
+
+**Frontend Deploy Task** (`Deploy: ExplorerToken frontend`)
+- Builds the frontend with `npm ci && npm run build`
+- Detects the Nginx web root for haswork.dev automatically
+- Backs up current deployment to `{root}_backup_{timestamp}`
+- Deploys new build with rsync
+- Runs sanity checks:
+  - `curl -I https://haswork.dev` → HTTP/2 200
+  - `curl -I https://haswork.dev/api/chains` → HTTP/2 200
+- **Success signals**: Both curl checks return 200, no 500 errors
+
+**Security & Admin Route Checks**
+- Unauthenticated `HEAD /api/admin/settings` → 401/403 (not 500)
+- Rate limiting in effect:
+  - `/api/auth/login`: 5 requests/min per IP, returns `{ "error": "rate_limited" }` when exceeded
+  - `/api/admin/*`: 60 requests/min per IP, returns `{ "error": "rate_limited" }` when exceeded
+
+To run a deployment task:
+1. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+2. Type "Tasks: Run Task"
+3. Select either "Deploy: ExplorerToken backend" or "Deploy: ExplorerToken frontend"
+
 ## Contributing
 
 1. Create a focused branch for your changes

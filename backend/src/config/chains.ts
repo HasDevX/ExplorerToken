@@ -116,6 +116,6 @@ export const SUPPORTED_CHAINS: ChainMeta[] = KNOWN_CHAINS.filter((c) => c.suppor
 
 /**
  * Default chain IDs to use when no chains are configured
- * Includes the 10 primary supported chains
+ * Includes the 9 APIV2-supported chains (Linea excluded pending full vendor support)
  */
-export const DEFAULT_CHAIN_IDS: number[] = [1, 56, 137, 43114, 8453, 324, 42161, 10, 5000, 59144];
+export const DEFAULT_CHAIN_IDS: number[] = [1, 10, 56, 137, 42161, 43114, 8453, 324, 5000];
