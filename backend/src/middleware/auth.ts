@@ -13,22 +13,28 @@ export interface AuthRequest extends Request {
  * Middleware to require authentication
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
-
-  const token = authHeader.substring(7);
-
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'unauthorized' });
+      return;
+    }
+
+    const token = authHeader.substring(7);
+
+    // Validate token is not empty
+    if (!token || token.trim() === '') {
+      res.status(401).json({ error: 'unauthorized' });
+      return;
+    }
+
     const payload = verifyToken(token);
     (req as AuthRequest).user = payload;
     next();
   } catch (error) {
-    // Do not throw, just return 401
-    res.status(401).json({ error: 'Unauthorized' });
+    // Catch any errors and always return 401 (never throw)
+    res.status(401).json({ error: 'unauthorized' });
     return;
   }
 }
