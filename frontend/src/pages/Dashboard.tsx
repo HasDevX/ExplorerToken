@@ -51,6 +51,14 @@ export function Dashboard() {
     loadSettings();
   }, []);
 
+  // Auto-clear toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const loadSettings = async () => {
     try {
       const data = await getAdminSettings();

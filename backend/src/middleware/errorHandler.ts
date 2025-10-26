@@ -3,6 +3,18 @@ import { ZodError } from 'zod';
 import { RequestWithId } from './requestId';
 
 /**
+ * Check if error is an axios/HTTP error with status code
+ */
+function isHttpError(error: unknown): error is { response?: { status?: number } } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: unknown }).response === 'object'
+  );
+}
+
+/**
  * Centralized error handling middleware
  * Maps various error types to appropriate HTTP responses
  */
@@ -22,27 +34,28 @@ export function errorHandler(error: Error, req: Request, res: Response, _next: N
     return;
   }
 
-  // Rate limit error -> 429
-  if (error.message?.includes('rate limit') || error.message?.includes('Too many requests')) {
-    res.status(429).json({
-      error: 'Too many requests',
-      requestId,
-    });
-    return;
-  }
+  // Check for HTTP errors with status codes
+  if (isHttpError(error) && error.response?.status) {
+    const status = error.response.status;
 
-  // Upstream provider error -> 502
-  if (
-    error.message?.includes('upstream') ||
-    error.message?.includes('Etherscan') ||
-    error.message?.includes('API error')
-  ) {
-    res.status(502).json({
-      error: error.message || 'Upstream provider error',
-      code: 'UPSTREAM_ERROR',
-      requestId,
-    });
-    return;
+    // Rate limit from upstream -> 429
+    if (status === 429) {
+      res.status(429).json({
+        error: 'Too many requests',
+        requestId,
+      });
+      return;
+    }
+
+    // Upstream errors (5xx) -> 502
+    if (status >= 500) {
+      res.status(502).json({
+        error: error.message || 'Upstream provider error',
+        code: 'UPSTREAM_ERROR',
+        requestId,
+      });
+      return;
+    }
   }
 
   // Fallback -> 500 with requestId
