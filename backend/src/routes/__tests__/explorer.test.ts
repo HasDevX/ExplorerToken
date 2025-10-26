@@ -336,12 +336,13 @@ describe('Explorer API Routes', () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        chainId: 1,
-        address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0',
         page: 1,
         offset: 25,
-        data: mockHolders,
+        total: null,
+        result: mockHolders,
       });
+
+      expect(response.headers['cache-control']).toBe('public, max-age=60');
 
       expect(etherscanClient.getTokenHolders).toHaveBeenCalledWith({
         chainId: 1,
@@ -367,6 +368,8 @@ describe('Explorer API Routes', () => {
 
       expect(response.body.page).toBe(1);
       expect(response.body.offset).toBe(25);
+      expect(response.body.total).toBeNull();
+      expect(response.body.result).toEqual(mockHolders);
 
       expect(etherscanClient.getTokenHolders).toHaveBeenCalledWith({
         chainId: 137,
@@ -452,7 +455,7 @@ describe('Explorer API Routes', () => {
       });
     });
 
-    it('should return 501 when provider feature is unavailable', async () => {
+    it('should return 200 with unavailable:true when provider feature is unavailable', async () => {
       (etherscanClient.getTokenHolders as jest.Mock).mockRejectedValue(
         new etherscanClient.ProviderFeatureUnavailableError(
           'Feature not available: not available',
@@ -463,11 +466,18 @@ describe('Explorer API Routes', () => {
 
       const response = await request(app)
         .get('/api/token/1/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0/holders')
-        .expect(501);
+        .expect(200);
 
       expect(response.body).toEqual({
-        error: 'Holders not available on this chain or plan',
+        page: 1,
+        offset: 25,
+        total: null,
+        unavailable: true,
+        reason: 'Holders not available on this chain/plan',
+        result: [],
       });
+
+      expect(response.headers['cache-control']).toBe('public, max-age=60');
     });
   });
 });

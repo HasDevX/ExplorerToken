@@ -248,17 +248,61 @@ export function AddressPage() {
                       (holdersError as { response?: { status?: number } }).response?.status ===
                         429 && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                          <p className="text-yellow-800 text-sm">
-                            ⚠️ Rate limit exceeded. Please wait a moment before trying again.
+                          <p className="text-yellow-800 text-sm font-semibold mb-1">
+                            ⚠️ Rate Limit Exceeded
+                          </p>
+                          <p className="text-yellow-700 text-sm">
+                            Please wait a moment before trying again. You can also try refreshing
+                            the page in a few seconds.
                           </p>
                         </div>
                       )}
                   </div>
                 )}
-                {holders && holders.data.length === 0 && (
+                {holders && holders.unavailable && (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-blue-800 text-sm font-semibold mb-1">
+                        ℹ️ Feature Not Available
+                      </p>
+                      <p className="text-blue-700 text-sm">
+                        {holders.reason ||
+                          'Holders information is not available for this chain or plan.'}
+                      </p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                              Rank
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                              Address
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                              Balance (Raw)
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                              Percentage
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          <tr>
+                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                              No data available
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {holders && !holders.unavailable && holders.result.length === 0 && (
                   <div className="text-gray-600">No holders found for this token.</div>
                 )}
-                {holders && holders.data.length > 0 && (
+                {holders && !holders.unavailable && holders.result.length > 0 && (
                   <>
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
@@ -279,7 +323,7 @@ export function AddressPage() {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {holders.data.map((holder, idx) => (
+                          {holders.result.map((holder, idx) => (
                             <tr key={holder.address} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {(page - 1) * offset + idx + 1}
@@ -314,7 +358,7 @@ export function AddressPage() {
                       <span className="text-gray-600">Page {page}</span>
                       <button
                         onClick={() => setPage((p) => p + 1)}
-                        disabled={holders.data.length < offset}
+                        disabled={holders.result.length < offset}
                         className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
                       >
                         Next

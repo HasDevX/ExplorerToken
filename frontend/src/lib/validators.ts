@@ -85,11 +85,12 @@ export const HolderSchema = z.object({
 });
 
 export const HoldersResponseSchema = z.object({
-  chainId: z.number(),
-  address: z.string(),
   page: z.number(),
   offset: z.number(),
-  data: z.array(HolderSchema),
+  total: z.number().nullable(),
+  unavailable: z.boolean().optional(),
+  reason: z.string().optional(),
+  result: z.array(HolderSchema),
 });
 
 // ============================================================================
