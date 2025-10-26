@@ -57,6 +57,24 @@ describe('Explorer API Routes', () => {
         ])
       );
     });
+
+    it('should return chains with all required fields', async () => {
+      const response = await request(app).get('/api/chains').expect(200);
+
+      expect(response.body.chains).toBeDefined();
+      response.body.chains.forEach((chain: any) => {
+        expect(chain).toHaveProperty('id');
+        expect(chain).toHaveProperty('key');
+        expect(chain).toHaveProperty('name');
+        expect(chain).toHaveProperty('explorerBaseUrl');
+        expect(chain).toHaveProperty('supported');
+        expect(typeof chain.id).toBe('number');
+        expect(typeof chain.key).toBe('string');
+        expect(typeof chain.name).toBe('string');
+        expect(typeof chain.explorerBaseUrl).toBe('string');
+        expect(chain.supported).toBe(true);
+      });
+    });
   });
 
   describe('GET /api/address/:chainId/:address/transfers', () => {
