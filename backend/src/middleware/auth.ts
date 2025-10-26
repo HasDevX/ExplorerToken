@@ -23,8 +23,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
     const token = authHeader.substring(7);
 
-    // Validate token is not empty
-    if (!token || token.trim() === '') {
+    // Validate token is not empty or whitespace-only
+    if (token.trim() === '') {
       res.status(401).json({ error: 'unauthorized' });
       return;
     }
