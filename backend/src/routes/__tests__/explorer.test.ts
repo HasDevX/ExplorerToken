@@ -62,6 +62,7 @@ describe('Explorer API Routes', () => {
       const response = await request(app).get('/api/chains').expect(200);
 
       expect(response.body.chains).toBeDefined();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       response.body.chains.forEach((chain: any) => {
         expect(chain).toHaveProperty('id');
         expect(chain).toHaveProperty('key');
