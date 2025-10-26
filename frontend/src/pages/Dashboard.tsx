@@ -274,8 +274,16 @@ export function Dashboard() {
                           checked={selectedChains.includes(chain.id)}
                           onChange={() => handleChainToggle(chain.id)}
                           className="w-4 h-4 text-blue-600"
+                          disabled={!chain.supported}
                         />
-                        <span className="ml-3 text-gray-900">{chain.name}</span>
+                        <span className="ml-3 text-gray-900 flex items-center gap-2">
+                          {chain.name}
+                          {!chain.supported && (
+                            <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full">
+                              unsupported
+                            </span>
+                          )}
+                        </span>
                       </label>
                     ))}
                   </div>

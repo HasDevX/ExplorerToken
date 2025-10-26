@@ -79,19 +79,20 @@ export const KNOWN_CHAINS: ChainMeta[] = [
     supported: true,
   },
   {
-    id: 59144,
-    key: 'linea',
-    name: 'Linea',
-    explorerBaseUrl: 'https://lineascan.build',
-    supported: true,
+    id: 25,
+    key: 'cronos',
+    name: 'Cronos',
+    explorerBaseUrl: 'https://cronoscan.com',
+    // Marked as unsupported - Etherscan v2 API support pending vendor confirmation
+    supported: false,
   },
 ];
 
 /**
- * Default selected chains for setup wizard
+ * Default selected chains for setup wizard (9 APIV2-supported chains)
  */
 export const DEFAULT_SELECTED_CHAIN_IDS: number[] = [
-  1, 56, 137, 43114, 8453, 324, 42161, 10, 5000, 59144,
+  1, 10, 56, 137, 42161, 43114, 8453, 324, 5000,
 ];
 
 /**

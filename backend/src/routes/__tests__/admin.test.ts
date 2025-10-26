@@ -159,9 +159,9 @@ describe('Admin Routes', () => {
         chainsDetailed: expect.any(Array),
       });
 
-      // Verify we got the default chains
-      expect(response.body.selectedChainIds.length).toBe(10);
-      expect(response.body.chainsDetailed.length).toBe(10);
+      // Verify we got the default chains (9 APIV2-supported chains)
+      expect(response.body.selectedChainIds.length).toBe(9);
+      expect(response.body.chainsDetailed.length).toBe(9);
     });
 
     it('should return 500 with requestId on DB error', async () => {
