@@ -12,6 +12,7 @@ import * as cache from '@/services/cache';
 import * as auth from '@/services/auth';
 import * as db from '@/services/db';
 import { RequestWithId } from '@/middleware/requestId';
+import { DEFAULT_CHAIN_IDS } from '@/config/chains';
 
 // Mock services
 jest.mock('@/services/settings');
@@ -132,12 +133,16 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        selectedChainIds: [], // default
+        selectedChainIds: DEFAULT_CHAIN_IDS, // default to 10 primary chains
         cacheTtl: 60, // default
         apiKeySet: false,
         apiKeyLastValidated: null,
-        chainsDetailed: [],
+        chainsDetailed: expect.any(Array),
       });
+
+      // Verify we got the default chains
+      expect(response.body.selectedChainIds.length).toBe(10);
+      expect(response.body.chainsDetailed.length).toBe(10);
     });
 
     it('should return 500 with requestId on DB error', async () => {

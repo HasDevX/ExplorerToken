@@ -39,11 +39,11 @@ describe('Explorer API Routes', () => {
   });
 
   describe('GET /api/chains', () => {
-    it('should return a list of 9 supported chains', async () => {
+    it('should return a list of 10 supported chains', async () => {
       const response = await request(app).get('/api/chains').expect(200);
 
       expect(response.body).toHaveProperty('chains');
-      expect(response.body.chains).toHaveLength(9);
+      expect(response.body.chains).toHaveLength(10);
       expect(response.body.chains).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ id: 1, name: 'Ethereum', supported: true }),
@@ -55,6 +55,7 @@ describe('Explorer API Routes', () => {
           expect.objectContaining({ id: 8453, name: 'Base', supported: true }),
           expect.objectContaining({ id: 324, name: 'zkSync', supported: true }),
           expect.objectContaining({ id: 5000, name: 'Mantle', supported: true }),
+          expect.objectContaining({ id: 59144, name: 'Linea', supported: true }),
         ])
       );
     });

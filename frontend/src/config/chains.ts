@@ -44,27 +44,6 @@ export const KNOWN_CHAINS: ChainMeta[] = [
     supported: true,
   },
   {
-    id: 42161,
-    key: 'arb1',
-    name: 'Arbitrum One',
-    explorerBaseUrl: 'https://arbiscan.io',
-    supported: true,
-  },
-  {
-    id: 43114,
-    key: 'avax',
-    name: 'Avalanche C-Chain',
-    explorerBaseUrl: 'https://subnets.avax.network/c-chain',
-    supported: true,
-  },
-  {
-    id: 8453,
-    key: 'base',
-    name: 'Base',
-    explorerBaseUrl: 'https://basescan.org',
-    supported: true,
-  },
-  {
     id: 324,
     key: 'zksync',
     name: 'zkSync',
@@ -78,12 +57,42 @@ export const KNOWN_CHAINS: ChainMeta[] = [
     explorerBaseUrl: 'https://mantlescan.xyz',
     supported: true,
   },
+  {
+    id: 8453,
+    key: 'base',
+    name: 'Base',
+    explorerBaseUrl: 'https://basescan.org',
+    supported: true,
+  },
+  {
+    id: 42161,
+    key: 'arb1',
+    name: 'Arbitrum One',
+    explorerBaseUrl: 'https://arbiscan.io',
+    supported: true,
+  },
+  {
+    id: 43114,
+    key: 'avax',
+    name: 'Avalanche C-Chain',
+    explorerBaseUrl: 'https://snowtrace.io',
+    supported: true,
+  },
+  {
+    id: 59144,
+    key: 'linea',
+    name: 'Linea',
+    explorerBaseUrl: 'https://lineascan.build',
+    supported: true,
+  },
 ];
 
 /**
  * Default selected chains for setup wizard
  */
-export const DEFAULT_SELECTED_CHAIN_IDS: number[] = [1, 10, 56, 137, 42161, 43114, 8453, 324, 5000];
+export const DEFAULT_SELECTED_CHAIN_IDS: number[] = [
+  1, 56, 137, 43114, 8453, 324, 42161, 10, 5000, 59144,
+];
 
 /**
  * Get chain metadata by chain ID

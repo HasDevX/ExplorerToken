@@ -44,27 +44,6 @@ export const KNOWN_CHAINS: ChainMeta[] = [
     supported: true,
   },
   {
-    id: 42161,
-    key: 'arb1',
-    name: 'Arbitrum One',
-    explorerBaseUrl: 'https://arbiscan.io',
-    supported: true,
-  },
-  {
-    id: 43114,
-    key: 'avax',
-    name: 'Avalanche C-Chain',
-    explorerBaseUrl: 'https://subnets.avax.network/c-chain',
-    supported: true,
-  },
-  {
-    id: 8453,
-    key: 'base',
-    name: 'Base',
-    explorerBaseUrl: 'https://basescan.org',
-    supported: true,
-  },
-  {
     id: 324,
     key: 'zksync',
     name: 'zkSync',
@@ -79,10 +58,39 @@ export const KNOWN_CHAINS: ChainMeta[] = [
     supported: true,
   },
   {
+    id: 8453,
+    key: 'base',
+    name: 'Base',
+    explorerBaseUrl: 'https://basescan.org',
+    supported: true,
+  },
+  {
+    id: 42161,
+    key: 'arb1',
+    name: 'Arbitrum One',
+    explorerBaseUrl: 'https://arbiscan.io',
+    supported: true,
+  },
+  {
+    id: 43114,
+    key: 'avax',
+    name: 'Avalanche C-Chain',
+    explorerBaseUrl: 'https://snowtrace.io',
+    supported: true,
+  },
+  {
+    id: 59144,
+    key: 'linea',
+    name: 'Linea',
+    explorerBaseUrl: 'https://lineascan.build',
+    supported: true,
+  },
+  {
     id: 25,
     key: 'cronos',
-    name: 'Cronos (unsupported by APIV2)',
+    name: 'Cronos',
     explorerBaseUrl: 'https://cronoscan.com',
+    // Marked as unsupported - Etherscan v2 API support pending vendor confirmation
     supported: false,
   },
 ];
@@ -105,3 +113,9 @@ export const SUPPORTED_CHAIN_IDS: number[] = KNOWN_CHAINS.filter((c) => c.suppor
  * Array of supported chains (only chains with supported=true)
  */
 export const SUPPORTED_CHAINS: ChainMeta[] = KNOWN_CHAINS.filter((c) => c.supported);
+
+/**
+ * Default chain IDs to use when no chains are configured
+ * Includes the 10 primary supported chains
+ */
+export const DEFAULT_CHAIN_IDS: number[] = [1, 56, 137, 43114, 8453, 324, 42161, 10, 5000, 59144];

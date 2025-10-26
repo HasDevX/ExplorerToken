@@ -254,6 +254,13 @@ export function Dashboard() {
             {/* Settings Tab */}
             {activeTab === 'settings' && (
               <div className="space-y-6">
+                {selectedChains.length === 0 && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                    <strong>Note:</strong> Please select at least one chain to enable token explorer
+                    functionality.
+                  </div>
+                )}
+
                 <div>
                   <h2 className="text-lg font-semibold mb-4">Chain Configuration</h2>
                   <div className="grid grid-cols-2 gap-3">
