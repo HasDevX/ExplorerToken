@@ -10,7 +10,7 @@ import {
 } from '@/services/etherscanClient';
 import * as cache from '@/services/cache';
 import { rateLimit } from '@/middleware/rateLimit';
-import { SUPPORTED_CHAINS } from '@/config/chains';
+import { SUPPORTED_CHAINS, SUPPORTED_CHAIN_IDS } from '@/config/chains';
 
 export const explorerRouter = Router();
 
@@ -115,6 +115,13 @@ const HoldersQuerySchema = z.object({
 // ============================================================================
 
 /**
+ * Validate that a chain ID is supported
+ */
+function isSupportedChain(chainId: number): boolean {
+  return SUPPORTED_CHAIN_IDS.includes(chainId);
+}
+
+/**
  * Handle errors from async route handlers
  * Returns appropriate HTTP status and error response
  */
@@ -178,6 +185,14 @@ explorerRouter.get('/address/:chainId/:address/transfers', async (req: Request, 
     const { chainId, address } = paramsResult.data;
     const { page, offset, sort } = queryResult.data;
 
+    // Validate chain is supported
+    if (!isSupportedChain(chainId)) {
+      return res.status(400).json({
+        error: 'Unsupported chain',
+        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
+      });
+    }
+
     recordUsage('address/transfers', chainId);
 
     // Try to get from cache
@@ -231,6 +246,14 @@ explorerRouter.get('/token/:chainId/:address/info', async (req: Request, res: Re
 
     const { chainId, address } = paramsResult.data;
 
+    // Validate chain is supported
+    if (!isSupportedChain(chainId)) {
+      return res.status(400).json({
+        error: 'Unsupported chain',
+        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
+      });
+    }
+
     recordUsage('token/info', chainId);
 
     // Try to get from cache
@@ -271,6 +294,14 @@ explorerRouter.get('/tx/:chainId/:hash', async (req: Request, res: Response) => 
     }
 
     const { chainId, hash } = paramsResult.data;
+
+    // Validate chain is supported
+    if (!isSupportedChain(chainId)) {
+      return res.status(400).json({
+        error: 'Unsupported chain',
+        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
+      });
+    }
 
     recordUsage('tx', chainId);
 
@@ -322,6 +353,14 @@ explorerRouter.get('/token/:chainId/:address/holders', async (req: Request, res:
 
     const { chainId, address } = paramsResult.data;
     const { page, offset } = queryResult.data;
+
+    // Validate chain is supported
+    if (!isSupportedChain(chainId)) {
+      return res.status(400).json({
+        error: 'Unsupported chain',
+        message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
+      });
+    }
 
     recordUsage('token/holders', chainId);
 
