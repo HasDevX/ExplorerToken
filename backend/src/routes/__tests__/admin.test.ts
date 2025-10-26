@@ -104,10 +104,11 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        setupComplete: true,
+        selectedChainIds: [1, 137],
         cacheTtl: 60,
-        chains: [1, 137],
-        hasApiKey: true,
+        apiKeySet: true,
+        apiKeyLastValidated: null,
+        chainsDetailed: expect.any(Array),
       });
 
       // Verify the secret key is NOT in the response
@@ -131,10 +132,11 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        setupComplete: false,
+        selectedChainIds: [], // default
         cacheTtl: 60, // default
-        chains: [], // default
-        hasApiKey: false,
+        apiKeySet: false,
+        apiKeyLastValidated: null,
+        chainsDetailed: [],
       });
     });
 

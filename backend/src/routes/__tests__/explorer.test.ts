@@ -38,22 +38,24 @@ describe('Explorer API Routes', () => {
   });
 
   describe('GET /api/chains', () => {
-    it('should return a list of 10 supported chains', async () => {
+    it('should return a list of 9 supported chains', async () => {
       const response = await request(app).get('/api/chains').expect(200);
 
-      expect(response.body).toHaveLength(10);
-      expect(response.body).toEqual([
-        { id: 1, name: 'Ethereum' },
-        { id: 10, name: 'Optimism' },
-        { id: 56, name: 'BNB Smart Chain' },
-        { id: 100, name: 'Gnosis' },
-        { id: 137, name: 'Polygon' },
-        { id: 250, name: 'Fantom' },
-        { id: 43114, name: 'Avalanche C-Chain' },
-        { id: 42161, name: 'Arbitrum One' },
-        { id: 8453, name: 'Base' },
-        { id: 59144, name: 'Linea' },
-      ]);
+      expect(response.body).toHaveProperty('chains');
+      expect(response.body.chains).toHaveLength(9);
+      expect(response.body.chains).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 1, name: 'Ethereum', supported: true }),
+          expect.objectContaining({ id: 10, name: 'Optimism', supported: true }),
+          expect.objectContaining({ id: 56, name: 'BNB Smart Chain', supported: true }),
+          expect.objectContaining({ id: 137, name: 'Polygon', supported: true }),
+          expect.objectContaining({ id: 42161, name: 'Arbitrum One', supported: true }),
+          expect.objectContaining({ id: 43114, name: 'Avalanche C-Chain', supported: true }),
+          expect.objectContaining({ id: 8453, name: 'Base', supported: true }),
+          expect.objectContaining({ id: 324, name: 'zkSync', supported: true }),
+          expect.objectContaining({ id: 5000, name: 'Mantle', supported: true }),
+        ])
+      );
     });
   });
 

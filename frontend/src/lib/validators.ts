@@ -6,7 +6,10 @@ import { z } from 'zod';
 
 export const ChainSchema = z.object({
   id: z.number(),
+  key: z.string(),
   name: z.string(),
+  explorerBaseUrl: z.string(),
+  supported: z.boolean(),
 });
 
 export const TransferSchema = z.object({

@@ -6,6 +6,7 @@ import { updateSettings } from '@/services/settings';
 import * as cache from '@/services/cache';
 import { flushUsageLogs } from '@/routes/explorer';
 import { RequestWithId } from '@/middleware/requestId';
+import { getChainMeta, type ChainMeta } from '@/config/chains';
 
 export const adminRouter = Router();
 
@@ -32,12 +33,32 @@ adminRouter.get('/settings', adminReadLimiter, requireAuth, async (req: Request,
 
     const row = result.rows[0];
 
+    // Parse chain IDs defensively - handle both array of numbers and array of objects
+    let selectedChainIds: number[] = [];
+    if (Array.isArray(row.chains)) {
+      selectedChainIds = row.chains
+        .map((item: unknown) => {
+          if (typeof item === 'number') return item;
+          if (typeof item === 'object' && item !== null && 'id' in item) {
+            return (item as { id: number }).id;
+          }
+          return 0;
+        })
+        .filter((id: number) => id > 0);
+    }
+
+    // Build detailed chain metadata for selected chains
+    const chainsDetailed: ChainMeta[] = selectedChainIds
+      .map((id) => getChainMeta(id))
+      .filter((meta): meta is ChainMeta => meta !== undefined);
+
     // Sanitize and return safe data with defaults
     res.json({
-      setupComplete: !!row.setup_complete,
+      selectedChainIds,
       cacheTtl: row.cache_ttl ?? 60,
-      chains: Array.isArray(row.chains) ? row.chains : [],
-      hasApiKey: Boolean(row.etherscan_api_key),
+      apiKeySet: Boolean(row.etherscan_api_key),
+      apiKeyLastValidated: row.api_key_last_validated_at ? row.api_key_last_validated_at : null,
+      chainsDetailed,
     });
   } catch (error) {
     // Log error but don't expose details

@@ -1,19 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { completeSetup } from '../lib/api';
-
-const DEFAULT_CHAINS = [
-  { id: 1, name: 'Ethereum' },
-  { id: 10, name: 'Optimism' },
-  { id: 56, name: 'BNB Smart Chain' },
-  { id: 100, name: 'Gnosis' },
-  { id: 137, name: 'Polygon' },
-  { id: 250, name: 'Fantom' },
-  { id: 43114, name: 'Avalanche C-Chain' },
-  { id: 42161, name: 'Arbitrum One' },
-  { id: 8453, name: 'Base' },
-  { id: 59144, name: 'Linea' },
-];
+import { KNOWN_CHAINS, DEFAULT_SELECTED_CHAIN_IDS } from '../config/chains';
 
 export function Setup() {
   const navigate = useNavigate();
@@ -23,7 +11,7 @@ export function Setup() {
 
   // Form state
   const [apiKey, setApiKey] = useState('');
-  const [selectedChains, setSelectedChains] = useState<number[]>([1]); // Ethereum selected by default
+  const [selectedChains, setSelectedChains] = useState<number[]>(DEFAULT_SELECTED_CHAIN_IDS);
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -176,7 +164,7 @@ export function Setup() {
               <h2 className="text-xl font-semibold mb-4">Step 2: Select Chains</h2>
               <p className="text-gray-600 mb-4">Choose which EVM chains to support</p>
               <div className="grid grid-cols-2 gap-3">
-                {DEFAULT_CHAINS.map((chain) => (
+                {KNOWN_CHAINS.map((chain) => (
                   <label
                     key={chain.id}
                     className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"

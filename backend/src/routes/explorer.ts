@@ -10,6 +10,7 @@ import {
 } from '@/services/etherscanClient';
 import * as cache from '@/services/cache';
 import { rateLimit } from '@/middleware/rateLimit';
+import { SUPPORTED_CHAINS, SUPPORTED_CHAIN_IDS } from '@/config/chains';
 
 export const explorerRouter = Router();
 
@@ -114,6 +115,27 @@ const HoldersQuerySchema = z.object({
 // ============================================================================
 
 /**
+ * Validate that a chain ID is supported
+ */
+function isSupportedChain(chainId: number): boolean {
+  return SUPPORTED_CHAIN_IDS.includes(chainId);
+}
+
+/**
+ * Middleware to validate chain ID in route params
+ */
+function validateSupportedChain(chainId: number, res: Response): boolean {
+  if (!isSupportedChain(chainId)) {
+    res.status(400).json({
+      error: 'Unsupported chain',
+      message: `Chain ID ${chainId} is not supported. Check /api/chains for supported chains.`,
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
  * Handle errors from async route handlers
  * Returns appropriate HTTP status and error response
  */
@@ -147,20 +169,7 @@ function handleRouteError(res: Response, error: unknown): void {
 explorerRouter.get('/chains', (_req: Request, res: Response) => {
   recordUsage('chains');
 
-  const chains = [
-    { id: 1, name: 'Ethereum' },
-    { id: 10, name: 'Optimism' },
-    { id: 56, name: 'BNB Smart Chain' },
-    { id: 100, name: 'Gnosis' },
-    { id: 137, name: 'Polygon' },
-    { id: 250, name: 'Fantom' },
-    { id: 43114, name: 'Avalanche C-Chain' },
-    { id: 42161, name: 'Arbitrum One' },
-    { id: 8453, name: 'Base' },
-    { id: 59144, name: 'Linea' },
-  ];
-
-  res.json(chains);
+  res.json({ chains: SUPPORTED_CHAINS });
 });
 
 /**
@@ -189,6 +198,9 @@ explorerRouter.get('/address/:chainId/:address/transfers', async (req: Request, 
 
     const { chainId, address } = paramsResult.data;
     const { page, offset, sort } = queryResult.data;
+
+    // Validate chain is supported
+    if (!validateSupportedChain(chainId, res)) return;
 
     recordUsage('address/transfers', chainId);
 
@@ -243,6 +255,9 @@ explorerRouter.get('/token/:chainId/:address/info', async (req: Request, res: Re
 
     const { chainId, address } = paramsResult.data;
 
+    // Validate chain is supported
+    if (!validateSupportedChain(chainId, res)) return;
+
     recordUsage('token/info', chainId);
 
     // Try to get from cache
@@ -283,6 +298,9 @@ explorerRouter.get('/tx/:chainId/:hash', async (req: Request, res: Response) => 
     }
 
     const { chainId, hash } = paramsResult.data;
+
+    // Validate chain is supported
+    if (!validateSupportedChain(chainId, res)) return;
 
     recordUsage('tx', chainId);
 
@@ -334,6 +352,9 @@ explorerRouter.get('/token/:chainId/:address/holders', async (req: Request, res:
 
     const { chainId, address } = paramsResult.data;
     const { page, offset } = queryResult.data;
+
+    // Validate chain is supported
+    if (!validateSupportedChain(chainId, res)) return;
 
     recordUsage('token/holders', chainId);
 
