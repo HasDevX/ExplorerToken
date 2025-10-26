@@ -464,28 +464,67 @@ Get current authenticated user information.
 
 ### GET /api/admin/settings
 
-Get current application settings.
+Get current application settings. Returns sanitized settings data with safe defaults and never exposes sensitive information like API keys.
 
 **Headers:**
 
 - `Authorization: Bearer <token>` (required)
 
-**Response:**
+**Response (Success):**
 
 ```json
 {
-  "chains": [1, 10, 137],
+  "setupComplete": true,
   "cacheTtl": 60,
-  "apiKeySet": true,
-  "apiKeyLastValidated": "2024-01-15T10:30:00Z"
+  "chains": [1, 10, 137],
+  "hasApiKey": true
 }
 ```
 
+**Response Fields:**
+
+- `setupComplete` (boolean) - Whether the initial setup has been completed
+- `cacheTtl` (number) - Cache time-to-live in seconds (defaults to 60 if not set)
+- `chains` (array) - List of enabled chain IDs (defaults to empty array if not set)
+- `hasApiKey` (boolean) - Whether an Etherscan API key is configured (never exposes the actual key)
+
 **Status Codes:**
 
-- `200 OK` - Success
-- `401 Unauthorized` - Invalid or missing token
-- `404 Not Found` - Settings not found
+- `200 OK` - Success. Settings found and returned.
+- `401 Unauthorized` - Invalid or missing token. Client should clear token and redirect to login.
+- `409 Conflict` - Setup not completed. Settings table has no rows. Client should redirect to /setup.
+- `500 Internal Server Error` - Database error or other internal failure. Response includes a `requestId` for debugging but no sensitive details.
+
+**Error Response Examples:**
+
+401 Unauthorized:
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+409 Setup Not Completed:
+```json
+{
+  "error": "Setup not completed"
+}
+```
+
+500 Internal Error:
+```json
+{
+  "error": "Internal error",
+  "requestId": "a3f2e1d9b7c6"
+}
+```
+
+**Security Notes:**
+
+- The endpoint never returns sensitive data like API keys or secrets
+- All fields use safe defaults if database values are null or missing
+- Database errors return generic error messages without exposing internal details or stack traces
+- Each request is tagged with a unique `requestId` for server-side debugging
 
 ---
 

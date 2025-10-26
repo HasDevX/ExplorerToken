@@ -17,8 +17,8 @@ export function Login() {
     try {
       const response = await login({ username, password });
 
-      // Store JWT token
-      localStorage.setItem('jwt_token', response.token);
+      // Store JWT token under "token" key
+      localStorage.setItem('token', response.token);
 
       // Store user info
       localStorage.setItem('user', JSON.stringify(response.user));
