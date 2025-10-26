@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '@/middleware/auth';
-import { adminReadLimiter, adminWriteLimiter } from '@/middleware/rateLimiters';
+import { adminLimiter } from '@/middleware/rateLimiters';
 import { updateSettings } from '@/services/settings';
 import * as cache from '@/services/cache';
 import { flushUsageLogs } from '@/routes/explorer';
@@ -11,6 +11,9 @@ import { logger } from '@/lib/logger';
 
 export const adminRouter = Router();
 
+// Apply admin rate limiter to all admin routes
+adminRouter.use(adminLimiter);
+
 // ============================================================================
 // Settings Management
 // ============================================================================
@@ -19,7 +22,7 @@ export const adminRouter = Router();
  * GET /api/admin/settings
  * Get current application settings
  */
-adminRouter.get('/settings', adminReadLimiter, requireAuth, async (req: Request, res: Response) => {
+adminRouter.get('/settings', requireAuth, async (req: Request, res: Response) => {
   try {
     const db = await import('@/services/db').then((m) => m.getDb());
 
@@ -88,7 +91,6 @@ adminRouter.get('/settings', adminReadLimiter, requireAuth, async (req: Request,
  */
 adminRouter.put(
   '/settings',
-  adminWriteLimiter,
   requireAuth,
   async (req: Request, res: Response) => {
     try {
@@ -137,7 +139,7 @@ adminRouter.put(
  * PUT /api/admin/api-key
  * Update Etherscan API key
  */
-adminRouter.put('/api-key', adminWriteLimiter, requireAuth, async (req: Request, res: Response) => {
+adminRouter.put('/api-key', requireAuth, async (req: Request, res: Response) => {
   try {
     const ApiKeySchema = z.object({
       apiKey: z.string().min(1, 'API key is required'),
@@ -178,7 +180,6 @@ adminRouter.put('/api-key', adminWriteLimiter, requireAuth, async (req: Request,
  */
 adminRouter.post(
   '/cache/clear',
-  adminWriteLimiter,
   requireAuth,
   async (_req: Request, res: Response) => {
     try {
@@ -205,7 +206,7 @@ adminRouter.post(
  * GET /api/admin/metrics
  * Get usage metrics
  */
-adminRouter.get('/metrics', adminReadLimiter, requireAuth, (_req: Request, res: Response) => {
+adminRouter.get('/metrics', requireAuth, (_req: Request, res: Response) => {
   try {
     const usageLogs = flushUsageLogs();
 

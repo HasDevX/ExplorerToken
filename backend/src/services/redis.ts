@@ -109,6 +109,14 @@ export async function flushAll(): Promise<boolean> {
 }
 
 /**
+ * Get the Redis client instance for use with rate-limit-redis
+ * Returns null if Redis is not connected
+ */
+export function getClient(): RedisClientType | null {
+  return isConnected ? redisClient : null;
+}
+
+/**
  * Disconnect from Redis
  */
 export async function disconnect(): Promise<void> {
